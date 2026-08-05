@@ -330,22 +330,31 @@ function doLogin(){
   const p = document.getElementById('login-pass').value;
   const users = data.users || [];
   const found = users.find(x => x.username === u && x.password === p && x.role === 'mesero');
-  if(!found){
-    document.getElementById('login-error').style.display = 'flex';
-    return;
-  }
+  if(!found){ document.getElementById('login-error').style.display = 'flex'; return; }
   currentUser = found;
+  sessionStorage.setItem('restaurante_session', JSON.stringify(found));
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   initApp();
 }
 function doLogout(){
-  currentUser = null; currentTableId = null;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login-pass').value = '';
-  document.getElementById('login-error').style.display = 'none';
+  sessionStorage.removeItem('restaurante_session');
+  window.location.href = 'login.html';
 }
+
+// ── AUTO LOGIN desde login.html ─────────────────────────
+(function(){
+  const s = sessionStorage.getItem('restaurante_session');
+  if(s){ try{
+    const u = JSON.parse(s);
+    if(u.role === 'mesero'){
+      currentUser = u;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.addEventListener('DOMContentLoaded', initApp);
+    }
+  }catch(e){} }
+})();
 
 // ── INIT ───────────────────────────────────────────────
 function initApp(){

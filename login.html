@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso — Sistema de Restaurante</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display+SC:wght@400;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root{
+      --navy:#1B3A6B;--navy-dark:#112549;--navy-mid:#234A88;
+      --gold:#C9A84C;--gold-lt:#E8C96A;
+      --text:#1A1A2E;--muted:#5A6478;
+      --bg:#F0F4FA;--card:#FFFFFF;--border:#D8E4F4;--input-bg:#F7FAFF;
+      --danger:#DC2626;--success:#16A34A;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Karla',system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy-dark) 0%,var(--navy-mid) 100%);padding:24px;}
+
+    .card{background:#fff;border-radius:22px;padding:44px 40px;width:100%;max-width:420px;box-shadow:0 32px 80px rgba(0,0,0,.28);}
+
+    .brand{text-align:center;margin-bottom:32px;}
+    .brand-logo{width:70px;height:70px;border-radius:18px;background:var(--navy-dark);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 16px;overflow:hidden;}
+    .brand-logo img{width:100%;height:100%;object-fit:cover;}
+    .brand-name{font-family:'Playfair Display SC',serif;font-size:1.5rem;color:var(--navy-dark);}
+    .brand-sub{font-size:.84rem;color:var(--muted);margin-top:4px;}
+
+    .form-label{display:block;font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:7px;}
+    .form-group{margin-bottom:18px;}
+    .input-wrap{position:relative;}
+    .input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.9rem;pointer-events:none;}
+    .form-input{width:100%;padding:13px 14px 13px 40px;border-radius:11px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text);font-size:.95rem;font-family:inherit;outline:none;transition:border-color .2s,box-shadow .2s;}
+    .form-input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,58,107,.1);}
+    .form-input.err{border-color:var(--danger);}
+
+    .btn-login{width:100%;padding:15px;border-radius:11px;background:var(--navy-dark);color:#fff;font-size:1rem;font-weight:700;font-family:inherit;border:none;cursor:pointer;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:9px;transition:all .2s;}
+    .btn-login:hover{background:var(--navy-mid);transform:translateY(-1px);box-shadow:0 6px 20px rgba(27,58,107,.3);}
+    .btn-login:active{transform:none;}
+
+    .error-box{background:#FEF2F2;border:1px solid #FECACA;color:var(--danger);border-radius:10px;padding:12px 14px;font-size:.84rem;font-weight:600;display:none;align-items:center;gap:9px;margin-top:14px;}
+
+    .roles-hint{margin-top:28px;border-top:1px solid var(--border);padding-top:22px;}
+    .roles-hint-title{font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;}
+    .role-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg);margin-bottom:8px;}
+    .role-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+    .role-icon.admin{background:rgba(27,58,107,.1);color:var(--navy);}
+    .role-icon.mesero{background:rgba(201,168,76,.15);color:#92700A;}
+    .role-icon.cocina{background:rgba(239,68,68,.1);color:var(--danger);}
+    .role-info{flex:1;}
+    .role-label{font-size:.82rem;font-weight:700;color:var(--text);}
+    .role-desc{font-size:.74rem;color:var(--muted);margin-top:1px;}
+    .role-badge{font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:100px;background:var(--border);color:var(--muted);}
+
+    @media(max-width:480px){.card{padding:32px 24px;}.brand-logo{width:58px;height:58px;}}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">
+    <div class="brand-logo" id="brand-logo"><i class="fa-solid fa-utensils"></i></div>
+    <div class="brand-name" id="brand-name">Sistema Restaurante</div>
+    <div class="brand-sub">Ingresa tus credenciales para continuar</div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Usuario</label>
+    <div class="input-wrap">
+      <i class="fa-solid fa-user input-icon"></i>
+      <input type="text" id="inp-user" class="form-input" placeholder="Ej: admin, carlos, cocina" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Contraseña</label>
+    <div class="input-wrap">
+      <i class="fa-solid fa-lock input-icon"></i>
+      <input type="password" id="inp-pass" class="form-input" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+  </div>
+
+  <button class="btn-login" onclick="doLogin()">
+    <i class="fa-solid fa-right-to-bracket"></i> Ingresar
+  </button>
+
+  <div class="error-box" id="error-box">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span>Usuario o contraseña incorrectos</span>
+  </div>
+
+  <div class="roles-hint">
+    <div class="roles-hint-title">Perfiles disponibles</div>
+    <div class="role-row">
+      <div class="role-icon admin"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="role-info">
+        <div class="role-label">Administrador</div>
+        <div class="role-desc">Panel completo: mesas, menú, usuarios, cobros</div>
+      </div>
+      <span class="role-badge">admin.html</span>
+    </div>
+    <div class="role-row">
+      <div class="role-icon mesero"><i class="fa-solid fa-user-tie"></i></div>
+      <div class="role-info">
+        <div class="role-label">Mesero</div>
+        <div class="role-desc">Toma de órdenes por mesa</div>
+      </div>
+      <span class="role-badge">mesero.html</span>
+    </div>
+    <div class="role-row">
+      <div class="role-icon cocina"><i class="fa-solid fa-fire-burner"></i></div>
+      <div class="role-info">
+        <div class="role-label">Cocina</div>
+        <div class="role-desc">Órdenes en tiempo real</div>
+      </div>
+      <span class="role-badge">cocina.html</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function loadData(){
+  try{ return JSON.parse(localStorage.getItem('restaurante_data')||'{}'); }
+  catch(e){ return {}; }
+}
+
+function doLogin(){
+  const username = document.getElementById('inp-user').value.trim();
+  const password = document.getElementById('inp-pass').value;
+  const errBox   = document.getElementById('error-box');
+  errBox.style.display = 'none';
+  document.getElementById('inp-user').classList.remove('err');
+  document.getElementById('inp-pass').classList.remove('err');
+
+  if(!username || !password){
+    errBox.style.display = 'flex';
+    return;
+  }
+
+  const data = loadData();
+
+  // Check admin
+  const adminUser = data.adminUsername || 'admin';
+  const adminPass = data.adminPassword || 'admin123';
+  if(username === adminUser && password === adminPass){
+    sessionStorage.setItem('restaurante_session', JSON.stringify({id:0, name:'Administrador', username:adminUser, role:'admin'}));
+    window.location.href = 'admin.html';
+    return;
+  }
+
+  // Check meseros and cocina
+  const users = data.users || [];
+  const found = users.find(u => u.username === username && u.password === password);
+  if(found){
+    sessionStorage.setItem('restaurante_session', JSON.stringify({id:found.id, name:found.name, username:found.username, role:found.role}));
+    if(found.role === 'mesero')       window.location.href = 'mesero.html';
+    else if(found.role === 'cocina')  window.location.href = 'cocina.html';
+    else                              window.location.href = 'admin.html';
+    return;
+  }
+
+  // Failed
+  errBox.style.display = 'flex';
+  document.getElementById('inp-user').classList.add('err');
+  document.getElementById('inp-pass').classList.add('err');
+}
+
+// Load restaurant branding
+(function(){
+  const data = loadData();
+  const r = data.restaurant || {};
+  if(r.name)  document.getElementById('brand-name').textContent = r.name;
+  if(r.logo){
+    const logo = document.getElementById('brand-logo');
+    logo.innerHTML = `<img src="${r.logo}" alt="">`;
+  }
+})();
+</script>
+</body>
+</html>

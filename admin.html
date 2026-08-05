@@ -800,6 +800,7 @@ function doLogin(){
   const pass=document.getElementById('login-pass').value;
   const adminUser=data.adminUsername||'admin';
   if(user===adminUser && pass===data.adminPassword){
+    sessionStorage.setItem('restaurante_session',JSON.stringify({id:0,name:'Administrador',username:adminUser,role:'admin'}));
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app').style.display='block';
     renderApp();
@@ -809,11 +810,22 @@ function doLogin(){
   }
 }
 function doLogout(){
-  document.getElementById('app').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('login-pass').value='';
-  document.getElementById('login-error').style.display='none';
+  sessionStorage.removeItem('restaurante_session');
+  window.location.href='login.html';
 }
+
+// AUTO LOGIN desde login.html
+(function(){
+  const s=sessionStorage.getItem('restaurante_session');
+  if(s){try{
+    const u=JSON.parse(s);
+    if(u.role==='admin'){
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app').style.display='block';
+      document.addEventListener('DOMContentLoaded',renderApp);
+    }
+  }catch(e){}}
+})();
 
 // PAGES
 const pageTitles={dashboard:'Dashboard',mesas:'Mesas',cobro:'Comanda',info:'Info del Restaurante',menu:'Menú',promos:'Promociones',settings:'Configuración'};
