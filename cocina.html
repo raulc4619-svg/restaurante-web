@@ -175,7 +175,19 @@ function loadData(){
   try{ data = JSON.parse(localStorage.getItem('restaurante_data')||'{}'); }
   catch(e){ data = {}; }
   if(!data.orders) data.orders = [];
-  if(!data.tables) data.tables = [];
+  if(!data.tables || !data.tables.length) data.tables = [
+    {id:1,number:1,area:"Salón",capacity:4,status:"libre"},
+    {id:2,number:2,area:"Salón",capacity:4,status:"libre"},
+    {id:3,number:3,area:"Salón",capacity:6,status:"libre"},
+    {id:4,number:4,area:"Salón",capacity:2,status:"libre"},
+    {id:5,number:5,area:"Terraza",capacity:4,status:"libre"},
+    {id:6,number:6,area:"Terraza",capacity:6,status:"libre"},
+    {id:7,number:7,area:"Terraza",capacity:4,status:"libre"},
+    {id:8,number:8,area:"Barra",capacity:2,status:"libre"},
+    {id:9,number:9,area:"Barra",capacity:2,status:"libre"},
+    {id:10,number:10,area:"VIP",capacity:8,status:"libre"}
+  ];
+  if(!data.restaurant) data.restaurant = {name:"Restaurante",address:"Av. Principal 123, Ciudad"};
 }
 function saveData(){ localStorage.setItem('restaurante_data', JSON.stringify(data)); }
 function fmt(n){ return '$'+parseFloat(n||0).toFixed(2); }

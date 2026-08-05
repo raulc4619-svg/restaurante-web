@@ -300,14 +300,62 @@ let currentCatId = null;
 let activeArea = "Todas";
 let data = {};
 
+// ── DEFAULTS ───────────────────────────────────────────
+const DEFAULT_DATA = {
+  restaurant:{name:"Restaurante",tagline:"",description:"",banner:"",logo:"",
+    phone:"",address:"Av. Principal 123, Ciudad",email:"",hours:"Lun-Dom: 12:00 - 22:00"},
+  areas:["Salón","Terraza","Barra","VIP"],
+  tables:[
+    {id:1,number:1,area:"Salón",capacity:4,status:"libre"},
+    {id:2,number:2,area:"Salón",capacity:4,status:"libre"},
+    {id:3,number:3,area:"Salón",capacity:6,status:"libre"},
+    {id:4,number:4,area:"Salón",capacity:2,status:"libre"},
+    {id:5,number:5,area:"Terraza",capacity:4,status:"libre"},
+    {id:6,number:6,area:"Terraza",capacity:6,status:"libre"},
+    {id:7,number:7,area:"Terraza",capacity:4,status:"libre"},
+    {id:8,number:8,area:"Barra",capacity:2,status:"libre"},
+    {id:9,number:9,area:"Barra",capacity:2,status:"libre"},
+    {id:10,number:10,area:"VIP",capacity:8,status:"libre"}
+  ],
+  menu:[
+    {id:1,name:"Entradas",items:[
+      {id:101,name:"Ensalada César",price:12.99,description:"Lechuga romana, crutones, parmesano",image:""},
+      {id:102,name:"Sopa del Día",price:8.50,description:"Preparada con ingredientes frescos",image:""},
+      {id:103,name:"Ceviche Clásico",price:14.99,description:"Pescado fresco marinado en limón",image:""}
+    ]},
+    {id:2,name:"Platos Principales",items:[
+      {id:201,name:"Filete de Res",price:28.99,description:"Término a elección con guarnición",image:""},
+      {id:202,name:"Pollo a la Plancha",price:18.99,description:"Con verduras salteadas y papas",image:""},
+      {id:203,name:"Pasta Alfredo",price:16.50,description:"Fettuccine en salsa cremosa",image:""},
+      {id:204,name:"Paella de Mariscos",price:32.99,description:"Arroz con mariscos frescos",image:""}
+    ]},
+    {id:3,name:"Postres",items:[
+      {id:301,name:"Tiramisú",price:8.99,description:"Clásico italiano",image:""},
+      {id:302,name:"Cheesecake",price:7.50,description:"Con frutos rojos",image:""},
+      {id:303,name:"Brownie",price:6.99,description:"Con helado de vainilla",image:""}
+    ]},
+    {id:4,name:"Bebidas",items:[
+      {id:401,name:"Agua Mineral",price:2.50,description:"500ml",image:""},
+      {id:402,name:"Jugo Natural",price:4.99,description:"Naranja, mora o maracuyá",image:""},
+      {id:403,name:"Café Americano",price:3.50,description:"Grano de origen",image:""},
+      {id:404,name:"Limonada",price:4.50,description:"Natural con menta",image:""}
+    ]}
+  ],
+  orders:[],
+  adminPassword:"admin123",
+  adminUsername:"admin"
+};
+
 // ── DATA ───────────────────────────────────────────────
 function loadData(){
   try{ data = JSON.parse(localStorage.getItem('restaurante_data') || '{}'); }
   catch(e){ data = {}; }
-  if(!data.tables) data.tables = [];
+  // Si no hay datos guardados, usar defaults
+  if(!data.areas  || !data.areas.length)  data.areas  = DEFAULT_DATA.areas;
+  if(!data.tables || !data.tables.length) data.tables = JSON.parse(JSON.stringify(DEFAULT_DATA.tables));
+  if(!data.menu   || !data.menu.length)   data.menu   = JSON.parse(JSON.stringify(DEFAULT_DATA.menu));
   if(!data.orders) data.orders = [];
-  if(!data.menu)   data.menu   = [];
-  if(!data.areas)  data.areas  = [];
+  if(!data.restaurant) data.restaurant = DEFAULT_DATA.restaurant;
 }
 function saveData(){ localStorage.setItem('restaurante_data', JSON.stringify(data)); }
 function nextId(arr){ return arr.length ? Math.max(...arr.map(x=>x.id))+1 : 1; }
