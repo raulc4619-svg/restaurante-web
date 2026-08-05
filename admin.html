@@ -296,14 +296,18 @@
   <div class="login-card">
     <div class="login-logo"><i class="fa-solid fa-utensils"></i></div>
     <h1 class="login-title">Panel Admin</h1>
-    <p class="login-subtitle">Ingresa tu contraseña para administrar el restaurante</p>
+    <p class="login-subtitle">Ingresa tus credenciales de administrador</p>
+    <div class="form-group">
+      <label class="form-label">Usuario</label>
+      <input type="text" id="login-user" class="form-input" placeholder="admin" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
     <div class="form-group">
       <label class="form-label">Contraseña</label>
       <input type="password" id="login-pass" class="form-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button class="btn-login" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i> &nbsp;Ingresar</button>
-    <div class="login-error" id="login-error"><i class="fa-solid fa-circle-exclamation"></i> Contraseña incorrecta</div>
-    <p class="login-hint">Contraseña por defecto: <strong>admin123</strong></p>
+    <div class="login-error" id="login-error"><i class="fa-solid fa-circle-exclamation"></i> Usuario o contraseña incorrectos</div>
+    <p class="login-hint">Por defecto: usuario <strong>admin</strong> · contraseña <strong>admin123</strong></p>
   </div>
 </div>
 
@@ -546,15 +550,18 @@
       <div class="page" id="page-settings">
         <div class="page-header"><div><h1 class="page-h1">Configuración</h1><p class="page-p">Ajustes del sistema</p></div></div>
         <div class="card">
-          <div class="card-header"><div class="card-title"><i class="fa-solid fa-key" style="color:var(--gold)"></i> &nbsp;Cambiar contraseña</div></div>
+          <div class="card-header"><div class="card-title"><i class="fa-solid fa-user-shield" style="color:var(--gold)"></i> &nbsp;Credenciales del administrador</div></div>
           <div class="card-body">
             <div class="form-grid">
+              <div class="form-group"><label class="form-label">Usuario actual</label><input type="text" id="admin-current-user" class="form-input" placeholder="admin"></div>
+              <div class="form-group"><label class="form-label">Nuevo usuario</label><input type="text" id="admin-new-user" class="form-input" placeholder="Nuevo nombre de usuario"></div>
               <div class="form-group"><label class="form-label">Contraseña actual</label><input type="password" id="pass-current" class="form-input"></div>
               <div></div>
               <div class="form-group"><label class="form-label">Nueva contraseña</label><input type="password" id="pass-new" class="form-input"></div>
-              <div class="form-group"><label class="form-label">Confirmar</label><input type="password" id="pass-confirm" class="form-input"></div>
+              <div class="form-group"><label class="form-label">Confirmar contraseña</label><input type="password" id="pass-confirm" class="form-input"></div>
             </div>
-            <button class="btn btn-primary" onclick="changePassword()"><i class="fa-solid fa-lock"></i> Actualizar</button>
+            <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px;">Deja en blanco los campos que no quieras cambiar.</p>
+            <button class="btn btn-primary" onclick="changePassword()"><i class="fa-solid fa-lock"></i> Guardar cambios</button>
           </div>
         </div>
         <div class="card" style="border-color:var(--danger);">
@@ -757,6 +764,7 @@ const DEFAULT = {
     {id:10,number:10,area:"VIP",capacity:8,status:"libre"}
   ],
   orders:[],
+  adminUsername:"admin",
   adminPassword:"admin123",
   users:[
     {id:1,name:"Carlos López",username:"carlos",password:"mesa123",role:"mesero"},
@@ -779,6 +787,7 @@ function loadData(){
   if(!data.tables)data.tables=JSON.parse(JSON.stringify(DEFAULT.tables));
   if(!data.orders)data.orders=[];
   if(!data.users)data.users=JSON.parse(JSON.stringify(DEFAULT.users));
+  if(!data.adminUsername)data.adminUsername='admin';
 }
 function saveData(){localStorage.setItem('restaurante_data',JSON.stringify(data));}
 function nextId(arr){return arr.length?Math.max(...arr.map(x=>x.id))+1:1;}
@@ -787,8 +796,10 @@ function fmt(n){return '$'+parseFloat(n||0).toFixed(2);}
 // AUTH
 function doLogin(){
   loadData();
+  const user=document.getElementById('login-user').value.trim();
   const pass=document.getElementById('login-pass').value;
-  if(pass===data.adminPassword){
+  const adminUser=data.adminUsername||'admin';
+  if(user===adminUser && pass===data.adminPassword){
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app').style.display='block';
     renderApp();
@@ -819,6 +830,7 @@ function goPage(id){
   if(id==='menu')renderMenuPage();
   if(id==='promos')renderPromosPage();
   if(id==='usuarios')renderUsersPage();
+  if(id==='settings')renderSettingsPage();
   // Highlight active nav
   const navMap={dashboard:'Dashboard',mesas:'Mesas',info:'Info',menu:'Menú',promos:'Promo',settings:'Config',cobro:'Comanda'};
   document.querySelectorAll('.nav-item').forEach(n=>{
@@ -1426,16 +1438,31 @@ function saveInfo(){
 }
 
 // SETTINGS
+function renderSettingsPage(){
+  document.getElementById('admin-current-user').value = data.adminUsername||'admin';
+}
 function changePassword(){
+  const curUser=document.getElementById('admin-current-user').value.trim();
+  const newUser=document.getElementById('admin-new-user').value.trim();
   const cur=document.getElementById('pass-current').value;
   const np=document.getElementById('pass-new').value;
   const cf=document.getElementById('pass-confirm').value;
   if(cur!==data.adminPassword)return toast('Contraseña actual incorrecta','error');
-  if(np.length<4)return toast('Mínimo 4 caracteres','error');
-  if(np!==cf)return toast('Las contraseñas no coinciden','error');
-  data.adminPassword=np;saveData();
-  ['pass-current','pass-new','pass-confirm'].forEach(id=>document.getElementById(id).value='');
-  toast('Contraseña actualizada','success');
+  let changed=false;
+  if(newUser){
+    if(newUser.length<3)return toast('El usuario debe tener al menos 3 caracteres','error');
+    data.adminUsername=newUser; changed=true;
+  }
+  if(np){
+    if(np.length<4)return toast('Mínimo 4 caracteres para la contraseña','error');
+    if(np!==cf)return toast('Las contraseñas no coinciden','error');
+    data.adminPassword=np; changed=true;
+  }
+  if(!changed)return toast('No hay cambios que guardar','error');
+  saveData();
+  ['admin-new-user','pass-current','pass-new','pass-confirm'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('admin-current-user').value=data.adminUsername;
+  toast('Credenciales actualizadas correctamente','success');
 }
 function confirmReset(){if(!confirm('¿Restablecer TODOS los datos? Esta acción no se puede deshacer.'))return;data=JSON.parse(JSON.stringify(DEFAULT));saveData();renderApp();toast('Datos restablecidos','success');}
 
