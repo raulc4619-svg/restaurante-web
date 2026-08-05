@@ -694,7 +694,61 @@
     <div class="modal-footer" style="flex-wrap:wrap;gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-cobro-ticket')">Cancelar</button>
       <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir</button>
+      <button class="btn btn-amber" onclick="abrirModalFactura()" id="btn-factura-electronica"><i class="fa-solid fa-file-invoice-dollar"></i> Factura electrónica</button>
       <button class="btn btn-success" onclick="confirmarCobro()"><i class="fa-solid fa-circle-check"></i> Confirmar cobro y cerrar mesa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FACTURA ELECTRÓNICA -->
+<div class="modal-overlay" id="modal-factura">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-file-invoice-dollar" style="color:var(--gold)"></i> &nbsp;Factura Electrónica</div>
+      <button class="modal-close" onclick="closeModal('modal-factura')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="factura-resultado" style="display:none;padding:16px;border-radius:12px;margin-bottom:16px;"></div>
+      <div class="form-group">
+        <label class="form-label">Tipo de identificación</label>
+        <select class="form-input" id="fac-tipo-id" onchange="onTipoIdChange()">
+          <option value="07">Consumidor Final</option>
+          <option value="05">Cédula</option>
+          <option value="04">RUC</option>
+          <option value="08">Pasaporte</option>
+        </select>
+      </div>
+      <div class="form-group" id="fac-id-group">
+        <label class="form-label">Número de identificación</label>
+        <input type="text" class="form-input" id="fac-identificacion" placeholder="Ej: 1712345678">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre / Razón social</label>
+        <input type="text" class="form-input" id="fac-nombre" placeholder="Ej: Juan Pérez" value="Consumidor Final">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico <span style="color:var(--muted);font-weight:400;">(opcional — para envío del RIDE)</span></label>
+        <input type="email" class="form-input" id="fac-email" placeholder="cliente@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Método de pago</label>
+        <select class="form-input" id="fac-pago">
+          <option value="efectivo">Efectivo</option>
+          <option value="tarjeta_debito">Tarjeta de débito</option>
+          <option value="tarjeta_credito">Tarjeta de crédito</option>
+          <option value="transferencia">Transferencia bancaria</option>
+        </select>
+      </div>
+      <div style="background:var(--input-bg);border-radius:10px;padding:12px 16px;font-size:.82rem;color:var(--muted);border:1px solid var(--border);">
+        <i class="fa-solid fa-circle-info" style="color:var(--navy);margin-right:6px;"></i>
+        La factura se enviará al SRI en <strong id="fac-ambiente-label">modo PRUEBAS</strong>. Configura el backend en producción para emitir facturas reales.
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-factura')">Cancelar</button>
+      <button class="btn btn-amber" id="btn-emitir-factura" onclick="emitirFactura()">
+        <i class="fa-solid fa-paper-plane"></i> Emitir factura
+      </button>
     </div>
   </div>
 </div>
@@ -1230,6 +1284,121 @@ function confirmarCobro(){
 
 function closeMesa(){
   openCobrarTicket();
+}
+
+// ── FACTURA ELECTRÓNICA ──────────────────────────────────────────────────────
+// URL de tu backend en Railway — cambia esto cuando lo despliegues
+const BACKEND_URL = 'https://tu-backend.railway.app';
+
+function onTipoIdChange(){
+  const tipo = document.getElementById('fac-tipo-id').value;
+  const grupo = document.getElementById('fac-id-group');
+  const nombre = document.getElementById('fac-nombre');
+  const idInput = document.getElementById('fac-identificacion');
+  if(tipo === '07'){
+    grupo.style.display = 'none';
+    nombre.value = 'Consumidor Final';
+    idInput.value = '9999999999999';
+  } else {
+    grupo.style.display = '';
+    if(nombre.value === 'Consumidor Final') nombre.value = '';
+    idInput.value = '';
+  }
+}
+
+function abrirModalFactura(){
+  // Resetear formulario
+  document.getElementById('fac-tipo-id').value = '07';
+  document.getElementById('fac-nombre').value = 'Consumidor Final';
+  document.getElementById('fac-identificacion').value = '9999999999999';
+  document.getElementById('fac-email').value = '';
+  document.getElementById('fac-pago').value = 'efectivo';
+  document.getElementById('fac-id-group').style.display = 'none';
+  document.getElementById('factura-resultado').style.display = 'none';
+  document.getElementById('btn-emitir-factura').disabled = false;
+  document.getElementById('btn-emitir-factura').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Emitir factura';
+  openModal('modal-factura');
+
+  // Verificar si el backend está disponible
+  fetch(BACKEND_URL + '/health')
+    .then(r => r.json())
+    .then(d => {
+      const label = document.getElementById('fac-ambiente-label');
+      if(label) label.textContent = d.ambiente === 'PRODUCCIÓN' ? 'modo PRODUCCIÓN (facturas reales)' : 'modo PRUEBAS';
+    })
+    .catch(() => {
+      mostrarResultadoFactura(false, 'No se pudo conectar con el servidor de facturación. Verifica que el backend esté activo en Railway.');
+    });
+}
+
+async function emitirFactura(){
+  const tipo    = document.getElementById('fac-tipo-id').value;
+  const idNum   = tipo === '07' ? '9999999999999' : document.getElementById('fac-identificacion').value.trim();
+  const nombre  = document.getElementById('fac-nombre').value.trim();
+  const email   = document.getElementById('fac-email').value.trim();
+  const pago    = document.getElementById('fac-pago').value;
+
+  if(!nombre){ toast('Ingresa el nombre del cliente','error'); return; }
+  if(tipo !== '07' && !idNum){ toast('Ingresa el número de identificación','error'); return; }
+
+  const order = getOrder(currentTableId);
+  if(!order || !order.items.length){ toast('La orden no tiene ítems','error'); return; }
+
+  // Número de factura secuencial guardado en Firebase
+  const secuencial = (data.factura_secuencial || 0) + 1;
+
+  const btn = document.getElementById('btn-emitir-factura');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando al SRI...';
+
+  try {
+    const resp = await fetch(BACKEND_URL + '/factura', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cliente_nombre:         nombre,
+        cliente_identificacion: idNum,
+        cliente_tipo_id:        tipo,
+        cliente_email:          email,
+        items:  order.items.map(i => ({ name: i.name, price: i.price, qty: i.qty })),
+        total:  orderTotal(order),
+        metodo_pago: pago,
+        secuencial
+      })
+    });
+
+    const result = await resp.json();
+
+    if(result.ok){
+      // Guardar el nuevo secuencial en Firebase
+      data.factura_secuencial = secuencial;
+      saveData();
+      mostrarResultadoFactura(true, `
+        Factura emitida correctamente<br>
+        <strong>Clave de acceso:</strong> <code style="font-size:.72rem;word-break:break-all;">${result.clave_acceso || '—'}</code>
+        ${result.ride_url ? `<br><a href="${result.ride_url}" target="_blank" style="color:var(--navy);font-weight:700;">Ver RIDE (PDF) →</a>` : ''}
+      `);
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Factura emitida';
+    } else {
+      const msg = typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
+      mostrarResultadoFactura(false, 'Error del SRI: ' + msg);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Reintentar';
+    }
+  } catch(err) {
+    mostrarResultadoFactura(false, 'No se pudo conectar con el backend. ¿Está activo en Railway?');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Reintentar';
+  }
+}
+
+function mostrarResultadoFactura(ok, html){
+  const div = document.getElementById('factura-resultado');
+  div.style.display = '';
+  div.style.background = ok ? '#F0FDF4' : '#FEF2F2';
+  div.style.border = `1px solid ${ok ? '#BBF7D0' : '#FECACA'}`;
+  div.style.color = ok ? '#15803D' : '#DC2626';
+  div.innerHTML = `<i class="fa-solid ${ok ? 'fa-circle-check' : 'fa-circle-exclamation'}" style="margin-right:8px;"></i>${html}`;
 }
 
 function changeTableStatus(){openModal('modal-status');}
