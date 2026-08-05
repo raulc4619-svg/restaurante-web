@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Restaurante</title>
+  <script>document.documentElement.classList.add('js')</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display+SC:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Karla:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    /* ── TOKENS ── */
+    :root {
+      --navy:        #1B3A6B;
+      --navy-dark:   #112549;
+      --navy-mid:    #234A88;
+      --gold:        #C9A84C;
+      --gold-lt:     #E0BA62;
+      --gold-dim:    rgba(201,168,76,0.18);
+      --text:        #1C1917;
+      --muted:       #78716C;
+      --bg:          #FAF7F2;
+      --bg-alt:      #F2EDE4;
+      --card:        #FFFFFF;
+      --border:      #E4DAC8;
+      --border-lt:   #F0E8D8;
+      --shadow-sm:   0 2px 10px rgba(28,25,23,0.06);
+      --shadow:      0 6px 28px rgba(28,25,23,0.09);
+      --shadow-lg:   0 16px 60px rgba(28,25,23,0.13);
+      --radius:      16px;
+      --radius-sm:   10px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text:     #E7E3DC; --muted: #A8A29E;
+        --bg:       #161412; --bg-alt: #1C1917;
+        --card:     #211E1B; --border: #2C2926; --border-lt: #2C2926;
+        --shadow-sm:0 2px 10px rgba(0,0,0,0.2);
+        --shadow:   0 6px 28px rgba(0,0,0,0.28);
+        --shadow-lg:0 16px 60px rgba(0,0,0,0.38);
+      }
+    }
+    :root[data-theme="dark"] {
+      --text:     #E7E3DC; --muted: #A8A29E;
+      --bg:       #161412; --bg-alt: #1C1917;
+      --card:     #211E1B; --border: #2C2926; --border-lt: #2C2926;
+      --shadow-sm:0 2px 10px rgba(0,0,0,0.2);
+      --shadow:   0 6px 28px rgba(0,0,0,0.28);
+      --shadow-lg:0 16px 60px rgba(0,0,0,0.38);
+    }
+    :root[data-theme="light"] {
+      --text:     #1C1917; --muted: #78716C;
+      --bg:       #FAF7F2; --bg-alt: #F2EDE4;
+      --card:     #FFFFFF; --border: #E4DAC8; --border-lt: #F0E8D8;
+      --shadow-sm:0 2px 10px rgba(28,25,23,0.06);
+      --shadow:   0 6px 28px rgba(28,25,23,0.09);
+      --shadow-lg:0 16px 60px rgba(28,25,23,0.13);
+    }
+
+    /* ── RESET ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Karla', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.65; min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    img { max-width: 100%; display: block; }
+    a { text-decoration: none; color: inherit; }
+    button { font-family: inherit; cursor: pointer; }
+
+    /* ── HEADER ── */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      transition: background 0.4s, box-shadow 0.4s, backdrop-filter 0.4s;
+    }
+    .header.scrolled {
+      background: rgba(17, 37, 73, 0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 2px 24px rgba(0,0,0,0.22);
+    }
+    .header-inner {
+      max-width: 1280px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 72px; gap: 24px;
+    }
+    .header-brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .header-logo {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--gold-dim); border: 1.5px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0;
+      transition: transform 0.3s;
+    }
+    .header-logo:hover { transform: scale(1.05); }
+    .header-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .header-logo i { color: var(--gold); font-size: 18px; }
+    .header-name {
+      font-family: 'Playfair Display SC', Georgia, serif;
+      font-size: 1.1rem; color: #fff; letter-spacing: 0.02em;
+    }
+    .header-nav { display: flex; gap: 2px; align-items: center; }
+    .header-nav a {
+      color: rgba(255,255,255,0.75); font-size: 0.875rem; font-weight: 500;
+      padding: 8px 16px; border-radius: 8px; transition: all 0.2s;
+      letter-spacing: 0.01em; position: relative;
+    }
+    .header-nav a::after {
+      content: ''; position: absolute; bottom: 4px; left: 16px; right: 16px;
+      height: 1.5px; background: var(--gold); transform: scaleX(0);
+      transition: transform 0.25s; transform-origin: left;
+    }
+    .header-nav a:hover { color: #fff; }
+    .header-nav a:hover::after { transform: scaleX(1); }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .theme-toggle {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.7); font-size: 14px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .theme-toggle:hover { background: rgba(255,255,255,0.18); color: #fff; }
+    .hamburger {
+      display: none; background: none; border: none;
+      color: white; font-size: 20px; cursor: pointer; padding: 8px;
+    }
+    .mobile-nav {
+      display: none; flex-direction: column;
+      background: var(--navy-dark);
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .mobile-nav.open { display: flex; }
+    .mobile-nav a {
+      color: rgba(255,255,255,0.8); padding: 14px 24px;
+      font-size: 0.95rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+      transition: color 0.2s, background 0.2s;
+    }
+    .mobile-nav a:hover { color: var(--gold); background: rgba(255,255,255,0.04); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative; min-height: 100dvh;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(150deg, #0D1F42 0%, #1B3A6B 45%, #1D3F78 100%);
+      overflow: hidden;
+    }
+    /* Dot grid pattern */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
+      background-size: 30px 30px;
+      pointer-events: none;
+    }
+    /* Warm glow bottom */
+    .hero::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 200px;
+      background: linear-gradient(to top, rgba(201,168,76,0.06), transparent);
+      pointer-events: none;
+    }
+    .hero-bg-img {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; opacity: 0.18; pointer-events: none;
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 120px 32px 100px;
+      max-width: 860px;
+    }
+    .hero-eyebrow {
+      font-family: 'Karla', sans-serif;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--gold);
+      display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+    }
+    .hero-eyebrow::before, .hero-eyebrow::after {
+      content: ''; width: 36px; height: 1px; background: var(--gold); opacity: 0.5;
+    }
+    .hero-title {
+      font-family: 'Playfair Display SC', Georgia, serif;
+      font-size: clamp(2.8rem, 8vw, 6rem);
+      font-weight: 700; color: #fff; line-height: 1.05;
+      letter-spacing: -0.01em; margin-bottom: 24px;
+      text-shadow: 0 2px 40px rgba(0,0,0,0.3);
+    }
+    .hero-divider {
+      width: 80px; height: 2px;
+      background: linear-gradient(to right, transparent, var(--gold), transparent);
+      margin: 0 auto 24px;
+      transform-origin: center;
+    }
+    .hero-subtitle {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: rgba(255,255,255,0.65);
+      font-style: italic; font-weight: 300;
+      margin-bottom: 40px; max-width: 440px;
+      line-height: 1.7;
+    }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+    .hero-btn {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 14px 30px; border-radius: 8px; font-weight: 600;
+      font-size: 0.9rem; letter-spacing: 0.02em; border: none;
+      cursor: pointer; transition: all 0.25s; font-family: inherit;
+    }
+    .hero-btn-primary {
+      background: var(--gold); color: var(--navy-dark);
+    }
+    .hero-btn-primary:hover {
+      background: var(--gold-lt); transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(201,168,76,0.4);
+    }
+    .hero-btn-secondary {
+      background: transparent; color: rgba(255,255,255,0.85);
+      border: 1.5px solid rgba(255,255,255,0.28);
+    }
+    .hero-btn-secondary:hover {
+      border-color: rgba(255,255,255,0.6); color: #fff;
+      background: rgba(255,255,255,0.06); transform: translateY(-2px);
+    }
+    .scroll-indicator {
+      position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      z-index: 2;
+    }
+    .scroll-dot {
+      width: 5px; height: 5px; background: var(--gold);
+      border-radius: 50%; animation: scrollPulse 2.2s ease-in-out infinite;
+    }
+    .scroll-line {
+      width: 1px; height: 44px;
+      background: linear-gradient(to bottom, rgba(201,168,76,0.6), transparent);
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 1; transform: translateY(0); }
+      50% { opacity: 0.35; transform: translateY(10px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .scroll-dot { animation: none; }
+    }
+
+    /* ── SECTION BASE ── */
+    section { padding: 96px 32px; }
+    .section-inner { max-width: 1280px; margin: 0 auto; }
+    .section-header { text-align: center; margin-bottom: 60px; }
+    .section-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 12px;
+    }
+    .section-eyebrow::before, .section-eyebrow::after {
+      content: ''; width: 28px; height: 1px; background: var(--gold); opacity: 0.6;
+    }
+    .section-title {
+      font-family: 'Playfair Display SC', Georgia, serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem); color: var(--text);
+      letter-spacing: -0.01em; line-height: 1.15; margin-bottom: 8px;
+    }
+    .section-subtitle {
+      font-size: 1rem; color: var(--muted);
+      max-width: 500px; margin-inline: auto; line-height: 1.7;
+    }
+    .section-rule {
+      width: 50px; height: 2px; margin: 16px auto 0;
+      background: linear-gradient(to right, var(--navy), var(--gold));
+      border-radius: 2px;
+    }
+
+    /* ── MENU ── */
+    #menu { background: var(--bg); }
+    .menu-tabs {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      justify-content: center; margin-bottom: 44px;
+    }
+    .tab-btn {
+      padding: 10px 24px; border-radius: 100px;
+      border: 1.5px solid var(--border); background: var(--card);
+      color: var(--muted); font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; transition: all 0.22s; font-family: inherit;
+      letter-spacing: 0.01em;
+    }
+    .tab-btn:hover { border-color: var(--navy); color: var(--navy); }
+    .tab-btn.active {
+      background: var(--navy); color: #fff; border-color: var(--navy);
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 24px;
+    }
+    .menu-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--border-lt);
+      overflow: hidden; display: flex; flex-direction: column;
+      transition: transform 0.28s cubic-bezier(.34,1.56,.64,1),
+                  box-shadow 0.28s ease, border-color 0.22s;
+      cursor: default;
+    }
+    .menu-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg); border-color: var(--border);
+    }
+    .menu-card-img {
+      height: 188px; overflow: hidden;
+      background: linear-gradient(135deg, var(--bg-alt), var(--border-lt));
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .menu-card-img img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    .menu-card:hover .menu-card-img img { transform: scale(1.05); }
+    .menu-card-img-icon { font-size: 2.5rem; opacity: 0.18; color: var(--navy); }
+    .menu-card-body { padding: 20px 22px; flex: 1; display: flex; flex-direction: column; }
+    .menu-card-name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.1rem; font-weight: 600; color: var(--text);
+      margin-bottom: 7px; line-height: 1.3;
+    }
+    .menu-card-desc {
+      font-size: 0.85rem; color: var(--muted);
+      flex: 1; margin-bottom: 16px; line-height: 1.65;
+    }
+    .menu-card-footer { display: flex; align-items: center; justify-content: space-between; }
+    .menu-card-price {
+      font-size: 1.3rem; font-weight: 700; color: var(--navy);
+      font-variant-numeric: tabular-nums;
+    }
+    .menu-card-price .currency { font-size: 0.9rem; font-weight: 500; color: var(--muted); }
+    .menu-empty {
+      grid-column: 1/-1; text-align: center; padding: 52px;
+      color: var(--muted); font-style: italic;
+    }
+
+    /* ── PROMOTIONS ── */
+    #promociones { background: var(--bg-alt); }
+    .promo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 28px;
+    }
+    .promo-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--border-lt);
+      overflow: hidden; position: relative;
+      transition: transform 0.28s cubic-bezier(.34,1.56,.64,1), box-shadow 0.28s;
+    }
+    .promo-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+    .promo-card-visual {
+      height: 210px; position: relative; overflow: hidden;
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-mid) 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .promo-card-visual::after {
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent, transparent 8px,
+        rgba(255,255,255,0.015) 8px, rgba(255,255,255,0.015) 9px
+      );
+    }
+    .promo-card-visual img {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; opacity: 0.55; transition: transform 0.5s;
+    }
+    .promo-card:hover .promo-card-visual img { transform: scale(1.05); }
+    .promo-card-icon { position: relative; z-index: 1; font-size: 3rem; opacity: 0.2; color: #fff; }
+    .promo-badge {
+      position: absolute; top: 18px; right: 18px; z-index: 2;
+      background: var(--gold); color: var(--navy-dark);
+      font-weight: 700; font-size: 0.8rem;
+      padding: 6px 16px; border-radius: 100px; letter-spacing: 0.04em;
+    }
+    .promo-card-body { padding: 24px 26px; }
+    .promo-card-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; color: var(--text);
+    }
+    .promo-card-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.7; }
+    .promo-empty {
+      grid-column: 1/-1; text-align: center; padding: 52px;
+      color: var(--muted); font-style: italic;
+    }
+
+    /* ── BENEFITS ── */
+    #beneficios { background: var(--bg); }
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 18px;
+    }
+    .benefit-card {
+      background: var(--card); border-radius: var(--radius-sm);
+      padding: 22px 20px; display: flex; align-items: flex-start; gap: 16px;
+      border: 1px solid var(--border-lt); box-shadow: var(--shadow-sm);
+      transition: transform 0.25s cubic-bezier(.34,1.56,.64,1),
+                  box-shadow 0.25s, border-color 0.22s;
+      position: relative; overflow: hidden;
+    }
+    .benefit-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: var(--gold); opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .benefit-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--border); }
+    .benefit-card:hover::before { opacity: 1; }
+    .benefit-icon {
+      width: 50px; height: 50px; border-radius: 12px;
+      background: linear-gradient(135deg, rgba(27,58,107,0.08), rgba(27,58,107,0.04));
+      border: 1px solid var(--border-lt);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; color: var(--navy); flex-shrink: 0;
+      transition: background 0.22s, transform 0.22s;
+    }
+    .benefit-card:hover .benefit-icon {
+      background: linear-gradient(135deg, rgba(27,58,107,0.14), rgba(27,58,107,0.07));
+      transform: scale(1.08);
+    }
+    .benefit-name {
+      font-weight: 700; font-size: 0.9rem; color: var(--text);
+      margin-bottom: 4px; line-height: 1.3;
+    }
+    .benefit-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── FOOTER ── */
+    #contacto {
+      background: linear-gradient(150deg, #0D1F42 0%, #1B3A6B 100%);
+      padding: 96px 32px 0;
+    }
+    .contact-inner {
+      max-width: 1280px; margin: 0 auto;
+      display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 60px;
+      padding-bottom: 72px;
+    }
+    .contact-brand-name {
+      font-family: 'Playfair Display SC', Georgia, serif;
+      font-size: 1.5rem; color: #fff; margin-bottom: 14px;
+    }
+    .contact-brand-desc { font-size: 0.9rem; color: rgba(255,255,255,0.48); line-height: 1.75; }
+    .contact-brand-rule {
+      width: 40px; height: 1.5px; background: var(--gold);
+      margin: 20px 0; opacity: 0.7;
+    }
+    .contact-col-label {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 20px; opacity: 0.9;
+    }
+    .contact-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      color: rgba(255,255,255,0.6); font-size: 0.88rem;
+      margin-bottom: 14px; line-height: 1.5;
+    }
+    .contact-item i { color: var(--gold); flex-shrink: 0; margin-top: 2px; width: 14px; opacity: 0.85; }
+    .quick-links { display: flex; flex-direction: column; gap: 10px; }
+    .quick-links a {
+      color: rgba(255,255,255,0.55); font-size: 0.88rem;
+      transition: color 0.2s; display: flex; align-items: center; gap: 8px;
+    }
+    .quick-links a::before {
+      content: ''; width: 14px; height: 1px;
+      background: var(--gold); opacity: 0; transition: opacity 0.2s;
+    }
+    .quick-links a:hover { color: var(--gold); }
+    .quick-links a:hover::before { opacity: 1; }
+    .footer-bar {
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding: 22px 0;
+      max-width: 1280px; margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .footer-bar-text { color: rgba(255,255,255,0.28); font-size: 0.78rem; }
+    .footer-bar a { color: var(--gold); opacity: 0.7; transition: opacity 0.2s; }
+    .footer-bar a:hover { opacity: 1; }
+
+    /* ── BACK TO TOP ── */
+    .back-top {
+      position: fixed; bottom: 28px; right: 28px; z-index: 50;
+      width: 46px; height: 46px; border-radius: 50%;
+      background: var(--navy); color: #fff; border: none;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(27,58,107,0.4);
+      cursor: pointer; font-size: 15px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .back-top.visible { opacity: 1; pointer-events: auto; }
+    .back-top:hover { transform: translateY(-3px); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .contact-inner { grid-template-columns: 1fr; gap: 40px; }
+    }
+    @media (max-width: 768px) {
+      .header-nav { display: none; }
+      .hamburger { display: block; }
+      .header-inner { padding: 0 20px; }
+      section { padding: 72px 20px; }
+      .hero-content { padding: 100px 20px 80px; }
+      .benefits-grid { grid-template-columns: 1fr; }
+      #contacto { padding: 72px 20px 0; }
+    }
+    @media (max-width: 480px) {
+      .menu-grid { grid-template-columns: 1fr; }
+      .promo-grid { grid-template-columns: 1fr; }
+      .footer-bar { flex-direction: column; text-align: center; }
+    }
+
+    /* ── ANIMATION INIT STATES ── */
+    /* Only hide when JS is active — prevents blank page on no-JS/static */
+    html.js .hero .anim-ready {
+      opacity: 0;
+      transform: translateY(28px);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html.js .anim-ready { opacity: 1 !important; transform: none !important; }
+      .menu-card, .benefit-card, .promo-card { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header" id="header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <div class="header-logo" id="header-logo-wrap">
+        <i class="fa-solid fa-utensils" id="header-logo-icon"></i>
+      </div>
+      <span class="header-name" id="header-name">Restaurante</span>
+    </div>
+    <nav class="header-nav">
+      <a href="#menu">Menú</a>
+      <a href="#promociones">Promociones</a>
+      <a href="#beneficios">Beneficios</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <div class="header-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
+        <i class="fa-solid fa-moon" id="theme-icon"></i>
+      </button>
+      <button class="hamburger" onclick="toggleMobileNav()" aria-label="Menú">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+  </div>
+  <nav class="mobile-nav" id="mobile-nav">
+    <a href="#menu" onclick="closeMobileNav()">Menú</a>
+    <a href="#promociones" onclick="closeMobileNav()">Promociones</a>
+    <a href="#beneficios" onclick="closeMobileNav()">Beneficios</a>
+    <a href="#contacto" onclick="closeMobileNav()">Contacto</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="inicio">
+  <img class="hero-bg-img" id="hero-banner-img" src="" alt="" style="display:none">
+  <div class="hero-content">
+    <div class="hero-eyebrow anim-ready" id="hero-eyebrow">Bienvenidos</div>
+    <h1 class="hero-title anim-ready" id="hero-title">La Mesa Dorada</h1>
+    <div class="hero-divider anim-ready"></div>
+    <p class="hero-subtitle anim-ready" id="hero-subtitle">Sabor que une familias, momentos que perduran.</p>
+    <div class="hero-btns">
+      <a href="#menu" class="hero-btn hero-btn-primary anim-ready">
+        <i class="fa-solid fa-book-open"></i> Ver Menú
+      </a>
+      <a href="#contacto" class="hero-btn hero-btn-secondary anim-ready">
+        <i class="fa-solid fa-location-dot"></i> Cómo llegar
+      </a>
+    </div>
+  </div>
+  <div class="scroll-indicator anim-ready">
+    <div class="scroll-dot"></div>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- MENU -->
+<section id="menu">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow anim-ready">Nuestra Carta</div>
+      <h2 class="section-title anim-ready">Menú del Restaurante</h2>
+      <p class="section-subtitle anim-ready">Selecciona una categoría para explorar nuestros platos</p>
+      <div class="section-rule anim-ready"></div>
+    </div>
+    <div class="menu-tabs" id="menu-tabs"></div>
+    <div class="menu-grid" id="menu-grid"></div>
+  </div>
+</section>
+
+<!-- PROMOTIONS -->
+<section id="promociones">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow anim-ready">Ofertas Especiales</div>
+      <h2 class="section-title anim-ready">Promociones</h2>
+      <p class="section-subtitle anim-ready">Aprovecha nuestras ofertas exclusivas y disfruta más</p>
+      <div class="section-rule anim-ready"></div>
+    </div>
+    <div class="promo-grid" id="promo-grid"></div>
+  </div>
+</section>
+
+<!-- BENEFITS -->
+<section id="beneficios">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow anim-ready">Lo que ofrecemos</div>
+      <h2 class="section-title anim-ready">Nuestros Beneficios</h2>
+      <p class="section-subtitle anim-ready">Sistema completo de gestión para una experiencia superior</p>
+      <div class="section-rule anim-ready"></div>
+    </div>
+    <div class="benefits-grid">
+      <div class="benefit-card">
+        <div class="benefit-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+        <div><div class="benefit-name">Toma de Órdenes para Meseros</div><div class="benefit-desc">Sistema ágil para que tus meseros tomen pedidos desde cualquier dispositivo.</div></div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+        <div><div class="benefit-name">Cobros por Cuentas Separadas</div><div class="benefit-desc">Divide la cuenta entre comensales de forma rápida y sin complicaciones.</div></div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><i class="fa-solid fa-cash-register"></i></div>
+        <div><div class="benefit-name">Venta de Caja Directa</div><div class="benefit-desc">Gestiona ventas en caja con rapidez, sin intermediarios ni esperas.</div></div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><i class="fa-solid fa-file-invoice"></i></div>
+        <div><div class="benefit-name">Facturación Electrónica Ilimitada</div><div class="benefit-desc">Genera facturas electrónicas sin límite, cumpliendo todos los requisitos fiscales.</div></div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><i class="fa-solid fa-print"></i></div>
+        <div><div class="benefit-name">Impresión de Comandas</div><div class="benefit-desc">Envía órdenes automáticamente a cocina con impresión instantánea.</div></div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><i class="fa-solid fa-tags"></i></div>
+        <div><div class="benefit-name">Cobros por Mesas</div><div class="benefit-desc">Control total de consumo por mesa: abre, gestiona y cierra con un clic.</div></div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><i class="fa-solid fa-comment-dots"></i></div>
+        <div><div class="benefit-name">Observaciones Personalizadas</div><div class="benefit-desc">Agrega instrucciones especiales a cada plato según la preferencia del cliente.</div></div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><i class="fa-solid fa-receipt"></i></div>
+        <div><div class="benefit-name">Precuenta para Clientes</div><div class="benefit-desc">Entrega un resumen del consumo antes del cobro final para mayor transparencia.</div></div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><i class="fa-solid fa-store"></i></div>
+        <div><div class="benefit-name">Gestión por Áreas</div><div class="benefit-desc">Organiza tu restaurante por zonas: terraza, salón, barra, eventos y más.</div></div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon"><i class="fa-solid fa-headset"></i></div>
+        <div><div class="benefit-name">Soporte</div><div class="benefit-desc">Atención personalizada para resolver cualquier duda o inconveniente al instante.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer id="contacto">
+  <div class="contact-inner">
+    <div>
+      <div class="contact-brand-name" id="footer-name">La Mesa Dorada</div>
+      <div class="contact-brand-rule"></div>
+      <p class="contact-brand-desc" id="footer-desc">Un espacio donde cada plato cuenta una historia y cada visita se convierte en un recuerdo.</p>
+    </div>
+    <div>
+      <div class="contact-col-label">Contacto</div>
+      <div class="contact-item"><i class="fa-solid fa-phone"></i><span id="footer-phone">+1 (555) 123-4567</span></div>
+      <div class="contact-item"><i class="fa-solid fa-envelope"></i><span id="footer-email">info@restaurante.com</span></div>
+      <div class="contact-item"><i class="fa-solid fa-location-dot"></i><span id="footer-address">Av. Principal 123, Ciudad</span></div>
+      <div class="contact-item"><i class="fa-solid fa-clock"></i><span id="footer-hours">Lun-Dom: 12:00 - 22:00</span></div>
+    </div>
+    <div>
+      <div class="contact-col-label">Navegación</div>
+      <div class="quick-links">
+        <a href="#inicio">Inicio</a>
+        <a href="#menu">Menú</a>
+        <a href="#promociones">Promociones</a>
+        <a href="#beneficios">Beneficios</a>
+        <a href="admin.html">Administrador</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <span class="footer-bar-text" id="footer-copy">© 2025 La Mesa Dorada. Todos los derechos reservados.</span>
+    <a href="admin.html" class="footer-bar-text" style="color:var(--gold)">Panel Admin →</a>
+  </div>
+</footer>
+
+<button class="back-top" id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Volver arriba">
+  <i class="fa-solid fa-chevron-up"></i>
+</button>
+
+<script>
+  /* ── DEFAULT DATA ── */
+  const DEFAULT = {
+    restaurant: { name:"La Mesa Dorada", tagline:"Sabor que une familias", description:"Un espacio donde cada plato cuenta una historia y cada visita se convierte en un recuerdo.", banner:"", logo:"", phone:"+1 (555) 123-4567", address:"Av. Principal 123, Ciudad", email:"info@lamesadorada.com", hours:"Lun-Dom: 12:00 - 22:00" },
+    menu: [
+      { id:1, name:"Entradas", items:[ {id:101,name:"Ensalada César",price:12.99,description:"Lechuga romana, crutones, parmesano y aderezo especial",image:""}, {id:102,name:"Sopa del Día",price:8.50,description:"Preparada con ingredientes frescos de temporada",image:""}, {id:103,name:"Ceviche Clásico",price:14.99,description:"Pescado fresco marinado en limón con cebolla morada",image:""} ] },
+      { id:2, name:"Platos Principales", items:[ {id:201,name:"Filete de Res",price:28.99,description:"Filete jugoso a la parrilla con guarnición y salsa especial",image:""}, {id:202,name:"Pollo a la Plancha",price:18.99,description:"Pechuga marinada con hierbas mediterráneas",image:""}, {id:203,name:"Pasta Alfredo",price:16.50,description:"Fettuccine con salsa cremosa y queso parmesano",image:""}, {id:204,name:"Paella de Mariscos",price:32.99,description:"Arroz con azafrán, langostinos, mejillones y calamares",image:""} ] },
+      { id:3, name:"Postres", items:[ {id:301,name:"Tiramisú",price:9.99,description:"Clásico italiano con mascarpone y café",image:""}, {id:302,name:"Flan de Caramelo",price:7.50,description:"Suave flan casero con caramelo artesanal",image:""}, {id:303,name:"Brownie con Helado",price:10.99,description:"Brownie caliente de chocolate con helado de vainilla",image:""} ] },
+      { id:4, name:"Bebidas", items:[ {id:401,name:"Limonada Especial",price:5.99,description:"Limonada fresca con menta y jengibre",image:""}, {id:402,name:"Jugo Natural",price:4.50,description:"Jugos de frutas de temporada",image:""}, {id:403,name:"Agua Mineral",price:2.99,description:"Con o sin gas",image:""}, {id:404,name:"Café Especial",price:4.99,description:"Café de origen con leche cremada",image:""} ] }
+    ],
+    promotions: [
+      {id:1,title:"Happy Hour",description:"Todos los martes y jueves de 5pm a 7pm. 2x1 en bebidas seleccionadas.",discount:"2x1",image:"",active:true},
+      {id:2,title:"Menú del Día",description:"De lunes a viernes incluye entrada, plato principal y bebida.",discount:"15% OFF",image:"",active:true},
+      {id:3,title:"Cumpleaños Especial",description:"Celebra tu cumpleaños con nosotros y recibe un postre de cortesía.",discount:"Postre Gratis",image:"",active:true}
+    ],
+    adminPassword:"admin123"
+  };
+
+  let data = {};
+  let activeCategory = null;
+  let animationsInit = false;
+
+  function getData() {
+    try {
+      const s = localStorage.getItem('restaurante_data');
+      return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT));
+    } catch(e) { return JSON.parse(JSON.stringify(DEFAULT)); }
+  }
+
+  function prefersReducedMotion() {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  /* ── RENDER ── */
+  function render() {
+    data = getData();
+    const r = data.restaurant;
+
+    document.getElementById('header-name').textContent = r.name || 'Restaurante';
+    document.getElementById('page-title').textContent = r.name || 'Restaurante';
+    document.title = r.name || 'Restaurante';
+
+    const logoWrap = document.getElementById('header-logo-wrap');
+    logoWrap.innerHTML = r.logo
+      ? `<img src="${r.logo}" alt="${r.name}">`
+      : `<i class="fa-solid fa-utensils"></i>`;
+
+    document.getElementById('hero-title').textContent = r.name || 'Restaurante';
+    document.getElementById('hero-subtitle').textContent = r.tagline || '';
+    document.getElementById('hero-eyebrow').textContent = 'Bienvenidos';
+
+    const bannerImg = document.getElementById('hero-banner-img');
+    if (r.banner) { bannerImg.src = r.banner; bannerImg.style.display = 'block'; }
+    else bannerImg.style.display = 'none';
+
+    document.getElementById('footer-name').textContent = r.name || 'Restaurante';
+    document.getElementById('footer-desc').textContent = r.description || '';
+    document.getElementById('footer-phone').textContent = r.phone || '';
+    document.getElementById('footer-email').textContent = r.email || '';
+    document.getElementById('footer-address').textContent = r.address || '';
+    document.getElementById('footer-hours').textContent = r.hours || '';
+    document.getElementById('footer-copy').textContent = `© ${new Date().getFullYear()} ${r.name || 'Restaurante'}. Todos los derechos reservados.`;
+
+    renderMenu(false);
+    renderPromos();
+  }
+
+  function renderMenu(animate = true) {
+    const cats = data.menu || [];
+    const tabsEl = document.getElementById('menu-tabs');
+    const gridEl = document.getElementById('menu-grid');
+
+    if (!cats.length) {
+      tabsEl.innerHTML = '';
+      gridEl.innerHTML = '<div class="menu-empty">No hay categorías en el menú aún.</div>';
+      return;
+    }
+    if (!activeCategory || !cats.find(c => c.id === activeCategory)) activeCategory = cats[0].id;
+
+    tabsEl.innerHTML = cats.map(c =>
+      `<button class="tab-btn ${c.id === activeCategory ? 'active' : ''}" onclick="switchTab(${c.id})">${c.name}</button>`
+    ).join('');
+
+    const cat = cats.find(c => c.id === activeCategory);
+    const items = cat ? cat.items : [];
+
+    if (!items.length) { gridEl.innerHTML = '<div class="menu-empty">No hay platos en esta categoría.</div>'; return; }
+
+    gridEl.innerHTML = items.map(item => `
+      <div class="menu-card">
+        <div class="menu-card-img">
+          ${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy">` : `<i class="fa-solid fa-bowl-food menu-card-img-icon"></i>`}
+        </div>
+        <div class="menu-card-body">
+          <div class="menu-card-name">${item.name}</div>
+          <div class="menu-card-desc">${item.description || ''}</div>
+          <div class="menu-card-footer">
+            <div class="menu-card-price"><span class="currency">$</span>${parseFloat(item.price).toFixed(2)}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    if (animate && !prefersReducedMotion() && window.gsap) {
+      gsap.from('#menu-grid .menu-card', {
+        opacity: 0, y: 24, scale: 0.95, duration: 0.4,
+        stagger: { each: 0.055, from: 'start' },
+        ease: 'back.out(1.4)'
+      });
+    }
+  }
+
+  function switchTab(id) {
+    if (activeCategory === id) return;
+    if (!prefersReducedMotion() && window.gsap) {
+      const oldCards = document.querySelectorAll('#menu-grid .menu-card');
+      if (oldCards.length) {
+        gsap.to(oldCards, {
+          opacity: 0, y: -10, duration: 0.16, stagger: 0.02, ease: 'power1.in',
+          onComplete: () => { activeCategory = id; renderMenu(true); }
+        });
+      } else { activeCategory = id; renderMenu(true); }
+    } else { activeCategory = id; renderMenu(false); }
+  }
+
+  function renderPromos() {
+    const promos = (data.promotions || []).filter(p => p.active);
+    const grid = document.getElementById('promo-grid');
+    if (!promos.length) { grid.innerHTML = '<div class="promo-empty">No hay promociones activas en este momento.</div>'; return; }
+    grid.innerHTML = promos.map(p => `
+      <div class="promo-card">
+        <div class="promo-card-visual">
+          ${p.image ? `<img src="${p.image}" alt="${p.title}">` : ''}
+          <i class="fa-solid fa-percent promo-card-icon"></i>
+          ${p.discount ? `<div class="promo-badge">${p.discount}</div>` : ''}
+        </div>
+        <div class="promo-card-body">
+          <div class="promo-card-title">${p.title}</div>
+          <div class="promo-card-desc">${p.description}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /* ── GSAP ANIMATIONS ── */
+  function initAnimations() {
+    if (prefersReducedMotion() || !window.gsap) {
+      document.querySelectorAll('.anim-ready').forEach(el => {
+        el.style.opacity = '1'; el.style.transform = 'none';
+      });
+      return;
+    }
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    /* 1. Hero entrance */
+    const heroEls = document.querySelectorAll('.hero .anim-ready');
+    gsap.set(heroEls, { opacity: 0, y: 30 });
+
+    const heroTl = gsap.timeline({ delay: 0.15 });
+    heroTl
+      .to('.hero-eyebrow',   { opacity:1, y:0, duration:0.55, ease:'power2.out' })
+      .to('.hero-title',     { opacity:1, y:0, duration:0.75, ease:'expo.out' },   '-=0.25')
+      .to('.hero-divider',   { opacity:1, scaleX:1, duration:0.45, ease:'power2.out', transformOrigin:'center' }, '-=0.3')
+      .to('.hero-subtitle',  { opacity:1, y:0, duration:0.5,  ease:'power2.out' }, '-=0.2')
+      .to('.hero-btn',       { opacity:1, y:0, duration:0.45, stagger:0.1, ease:'power2.out' }, '-=0.25')
+      .to('.scroll-indicator',{ opacity:1, y:0, duration:0.4, ease:'power2.out' }, '-=0.1');
+
+    /* Reset divider initial scale for animation */
+    gsap.set('.hero-divider', { scaleX:0, opacity:0 });
+
+    /* 2. Header scroll effect */
+    ScrollTrigger.create({
+      start: 'top -80',
+      onEnter: ()     => document.getElementById('header').classList.add('scrolled'),
+      onLeaveBack: () => document.getElementById('header').classList.remove('scrolled'),
+    });
+
+    /* 3. Section headers scroll reveal */
+    document.querySelectorAll('section:not(.hero) .section-header').forEach(el => {
+      const children = Array.from(el.querySelectorAll('.anim-ready'));
+      gsap.set(children, { opacity:0, y:24 });
+      gsap.to(children, {
+        opacity:1, y:0, duration:0.55, stagger:0.08, ease:'power2.out',
+        scrollTrigger: { trigger: el, start:'top 88%' }
+      });
+    });
+
+    /* 4. Menu cards (initial render via section scroll) */
+    ScrollTrigger.create({
+      trigger: '#menu',
+      start: 'top 85%',
+      once: true,
+      onEnter: () => {
+        gsap.from('#menu-grid .menu-card', {
+          opacity:0, y:28, scale:0.95, duration:0.42,
+          stagger:{ each:0.06, from:'start' },
+          ease:'back.out(1.4)'
+        });
+      }
+    });
+
+    /* 5. Benefit cards */
+    gsap.set('.benefit-card', { opacity:0, y:20 });
+    gsap.to('.benefit-card', {
+      opacity:1, y:0, duration:0.4, stagger:{ each:0.045, from:'start' },
+      ease:'power2.out',
+      scrollTrigger: { trigger:'#beneficios .benefits-grid', start:'top 85%' }
+    });
+
+    /* 6. Promo cards */
+    ScrollTrigger.create({
+      trigger: '#promo-grid',
+      start: 'top 85%',
+      once: true,
+      onEnter: () => {
+        gsap.from('#promo-grid .promo-card', {
+          opacity:0, y:30, scale:0.97, duration:0.45,
+          stagger:{ each:0.09 },
+          ease:'power2.out'
+        });
+      }
+    });
+
+    /* 7. Footer columns */
+    gsap.set('.contact-inner > *', { opacity:0, y:24 });
+    gsap.to('.contact-inner > *', {
+      opacity:1, y:0, duration:0.55, stagger:0.1, ease:'power2.out',
+      scrollTrigger: { trigger:'#contacto', start:'top 85%' }
+    });
+
+    animationsInit = true;
+  }
+
+  /* ── THEME ── */
+  function getTheme() { return localStorage.getItem('theme') || 'light'; }
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('theme-icon').className = t === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  }
+  function toggleTheme() {
+    const t = getTheme() === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('theme', t); applyTheme(t);
+  }
+
+  /* ── MOBILE NAV ── */
+  function toggleMobileNav() { document.getElementById('mobile-nav').classList.toggle('open'); }
+  function closeMobileNav() { document.getElementById('mobile-nav').classList.remove('open'); }
+
+  /* ── BACK TO TOP ── */
+  window.addEventListener('scroll', () => {
+    document.getElementById('back-top').classList.toggle('visible', window.scrollY > 400);
+  });
+
+  /* ── STORAGE EVENTS ── */
+  window.addEventListener('storage', e => { if (e.key === 'restaurante_data') render(); });
+
+  /* ── INIT ── */
+  applyTheme(getTheme());
+  render();
+
+  window.addEventListener('DOMContentLoaded', () => {
+    // Small delay to let GSAP CDN load fully
+    setTimeout(initAnimations, 50);
+  });
+
+  // Fallback if DOMContentLoaded already fired
+  if (document.readyState !== 'loading') {
+    setTimeout(initAnimations, 50);
+  }
+</script>
+</body>
+</html>

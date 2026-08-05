@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Mesero — Toma de Órdenes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display+SC:wght@400;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root{
+      --navy:#1B3A6B;--navy-dark:#112549;--navy-mid:#234A88;
+      --gold:#C9A84C;--gold-lt:#E8C96A;
+      --text:#1A1A2E;--muted:#5A6478;
+      --bg:#F0F4FA;--card:#FFFFFF;--border:#D8E4F4;--input-bg:#F7FAFF;
+      --danger:#DC2626;--danger-lt:#FEF2F2;
+      --success:#16A34A;--success-lt:#F0FDF4;
+      --amber:#D97706;--amber-lt:#FFFBEB;
+      --radius:14px;--shadow:0 2px 16px rgba(27,58,107,.08);--shadow-md:0 6px 24px rgba(27,58,107,.12);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Karla',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
+    button,input,select,textarea{font-family:inherit;}
+    button{cursor:pointer;}
+
+    /* ══ LOGIN ══ */
+    #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy-dark),var(--navy-mid));padding:24px;}
+    .login-card{background:var(--card);border-radius:20px;padding:44px 36px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.25);}
+    .login-logo{width:60px;height:60px;border-radius:14px;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 20px;}
+    .login-title{font-family:'Playfair Display SC',serif;font-size:1.6rem;text-align:center;margin-bottom:4px;}
+    .login-sub{text-align:center;color:var(--muted);font-size:.88rem;margin-bottom:32px;}
+    .form-group{margin-bottom:16px;}
+    .form-label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px;}
+    .form-input{width:100%;padding:13px 15px;border-radius:10px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text);font-size:.95rem;outline:none;transition:border-color .2s,box-shadow .2s;}
+    .form-input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,58,107,.1);}
+    .btn-login{width:100%;padding:14px;border-radius:10px;background:var(--navy);color:#fff;font-size:.95rem;font-weight:600;border:none;margin-top:8px;transition:all .2s;}
+    .btn-login:hover{background:var(--navy-mid);transform:translateY(-1px);}
+    .login-error{color:var(--danger);font-size:.84rem;text-align:center;padding:10px;background:var(--danger-lt);border-radius:8px;margin-top:10px;display:none;}
+
+    /* ══ APP SHELL ══ */
+    #app{display:none;min-height:100vh;flex-direction:column;}
+    .topbar{position:fixed;top:0;left:0;right:0;height:60px;background:var(--navy-dark);display:flex;align-items:center;justify-content:space-between;padding:0 18px;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+    .topbar-brand{display:flex;align-items:center;gap:10px;}
+    .topbar-logo{width:34px;height:34px;border-radius:8px;background:var(--gold);color:var(--navy-dark);display:flex;align-items:center;justify-content:center;font-size:.9rem;overflow:hidden;}
+    .topbar-logo img{width:100%;height:100%;object-fit:cover;}
+    .topbar-name{color:#fff;font-family:'Playfair Display SC',serif;font-size:.88rem;}
+    .topbar-user{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.7);font-size:.82rem;}
+    .topbar-user strong{color:#fff;}
+    .btn-logout{background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);padding:7px 12px;border-radius:8px;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all .2s;}
+    .btn-logout:hover{background:rgba(255,255,255,.2);color:#fff;}
+    .main{margin-top:60px;padding:20px 16px;max-width:900px;margin-left:auto;margin-right:auto;}
+
+    /* ══ VIEWS ══ */
+    .view{display:none;}
+    .view.active{display:block;}
+    .view-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+    .view-title{font-family:'Playfair Display SC',serif;font-size:1.35rem;font-weight:700;}
+    .view-sub{font-size:.82rem;color:var(--muted);margin-top:3px;}
+    .back-btn{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:.84rem;font-weight:600;background:none;border:none;padding:6px 0;margin-bottom:14px;transition:color .2s;}
+    .back-btn:hover{color:var(--navy);}
+
+    /* ══ AREA TABS ══ */
+    .area-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+    .area-tab{padding:8px 16px;border-radius:100px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:.8rem;font-weight:600;transition:all .18s;}
+    .area-tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+    /* ══ TABLE GRID ══ */
+    .tables-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;}
+    .table-card{background:var(--card);border-radius:var(--radius);border:2px solid var(--border);padding:20px 12px;text-align:center;cursor:pointer;transition:all .22s;user-select:none;-webkit-tap-highlight-color:transparent;}
+    .table-card:active{transform:scale(.96);}
+    .table-card.libre{border-color:#86efac;}
+    .table-card.ocupada{border-color:#fca5a5;background:rgba(254,242,242,.4);}
+    .table-card.reservada{border-color:#fcd34d;background:rgba(255,251,235,.4);}
+    .table-number{font-family:'Playfair Display SC',serif;font-size:2.2rem;font-weight:700;line-height:1;}
+    .table-area{font-size:.72rem;color:var(--muted);margin-top:3px;}
+    .table-cap{font-size:.7rem;color:var(--muted);margin-top:3px;}
+    .table-dot{width:9px;height:9px;border-radius:50%;margin:9px auto 0;}
+    .table-dot.libre{background:var(--success);}
+    .table-dot.ocupada{background:var(--danger);}
+    .table-dot.reservada{background:var(--amber);}
+    .table-mesero{font-size:.7rem;color:var(--navy);font-weight:600;margin-top:5px;}
+    .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+    .empty-state i{font-size:2.8rem;opacity:.2;display:block;margin-bottom:12px;}
+
+    /* ══ COMANDA ══ */
+    .comanda-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .panel{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);display:flex;flex-direction:column;min-height:480px;}
+    .panel-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .panel-title{font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:8px;}
+    .panel-body{flex:1;overflow-y:auto;padding:12px;}
+    .panel-footer{padding:14px 16px;border-top:1px solid var(--border);flex-shrink:0;}
+
+    /* Order items */
+    .order-item{background:var(--input-bg);border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid var(--border);}
+    .oi-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .oi-cat{font-size:.68rem;color:var(--muted);}
+    .oi-name{font-weight:600;font-size:.88rem;flex:1;}
+    .oi-price{font-weight:700;font-size:.88rem;color:var(--navy);font-variant-numeric:tabular-nums;}
+    .oi-del{background:none;border:none;color:var(--muted);font-size:.9rem;padding:3px;border-radius:5px;transition:color .15s;}
+    .oi-del:hover{color:var(--danger);}
+    .qty-row{display:flex;align-items:center;gap:8px;}
+    .qty-btn{width:30px;height:30px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-size:.95rem;font-weight:700;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+    .qty-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+    .qty-val{width:34px;text-align:center;font-weight:700;}
+    .note-input{width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:.8rem;margin-top:8px;outline:none;transition:border-color .2s;}
+    .note-input:focus{border-color:var(--navy);}
+    .note-input::placeholder{color:var(--muted);}
+
+    /* Menu picker */
+    .cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+    .cat-tab{padding:6px 13px;border-radius:100px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:.78rem;font-weight:600;transition:all .18s;}
+    .cat-tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+    .menu-item-row{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;border:1px solid var(--border);margin-bottom:7px;background:var(--card);transition:border-color .15s;}
+    .menu-item-row:hover{border-color:var(--navy);}
+    .mi-info{flex:1;}
+    .mi-name{font-weight:600;font-size:.86rem;}
+    .mi-desc{font-size:.74rem;color:var(--muted);margin-top:2px;}
+    .mi-price{font-size:.82rem;color:var(--muted);margin-right:8px;font-variant-numeric:tabular-nums;}
+    .add-btn{width:32px;height:32px;border-radius:9px;background:var(--navy);color:#fff;border:none;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0;}
+    .add-btn:hover{background:var(--gold);color:var(--navy-dark);}
+    .add-btn:active{transform:scale(.9);}
+
+    /* Total + actions */
+    .total-row{background:var(--input-bg);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+    .total-label{font-size:.8rem;color:var(--muted);}
+    .total-val{font-size:1.45rem;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;}
+    .action-row{display:flex;gap:8px;}
+    .btn{padding:10px 16px;border-radius:9px;font-size:.855rem;font-weight:600;border:none;display:inline-flex;align-items:center;gap:7px;transition:all .2s;font-family:inherit;}
+    .btn-primary{background:var(--navy);color:#fff;flex:1;justify-content:center;}
+    .btn-primary:hover{background:var(--navy-mid);}
+    .btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);}
+    .btn-ghost:hover{border-color:var(--navy);color:var(--navy);}
+    .btn-danger{background:var(--danger-lt);color:var(--danger);}
+    .btn-danger:hover{background:var(--danger);color:#fff;}
+    .btn-success{background:var(--success);color:#fff;flex:1;justify-content:center;}
+    .btn-success:hover{opacity:.9;}
+    .btn-sm{padding:6px 12px;font-size:.78rem;}
+
+    /* Mesa info bar */
+    .mesa-bar{background:var(--navy-dark);color:#fff;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+    .mesa-bar-num{font-family:'Playfair Display SC',serif;font-size:1.5rem;font-weight:700;color:var(--gold);}
+    .mesa-bar-info{flex:1;}
+    .mesa-bar-area{font-size:.82rem;color:rgba(255,255,255,.6);}
+    .mesa-bar-who{font-size:.78rem;color:rgba(255,255,255,.5);margin-top:2px;}
+    .mesa-bar-total{font-size:1.3rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--gold-lt);}
+
+    /* Badge */
+    .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:.72rem;font-weight:700;}
+    .badge-libre{background:var(--success-lt);color:var(--success);}
+    .badge-ocupada{background:var(--danger-lt);color:var(--danger);}
+    .badge-reservada{background:var(--amber-lt);color:var(--amber);}
+
+    /* Precuenta modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s;}
+    .modal-overlay.open{opacity:1;pointer-events:auto;}
+    .modal{background:var(--card);border-radius:16px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.3);transform:translateY(16px);transition:transform .2s;}
+    .modal-overlay.open .modal{transform:none;}
+    .modal-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);border-radius:16px 16px 0 0;}
+    .modal-title{font-weight:700;font-size:.95rem;}
+    .modal-close{background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:4px;border-radius:6px;}
+    .modal-body{padding:20px;}
+    .modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
+    /* Receipt */
+    .receipt{font-family:'Karla',monospace;max-width:300px;margin:0 auto;}
+    .receipt h2{font-family:'Playfair Display SC',serif;text-align:center;margin-bottom:4px;}
+    .receipt .rc-meta{text-align:center;font-size:.78rem;color:var(--muted);margin-bottom:14px;}
+    .receipt .rc-div{border-top:1px dashed var(--border);margin:8px 0;}
+    .receipt .rc-row{display:flex;justify-content:space-between;font-size:.84rem;padding:3px 0;}
+    .receipt .rc-row.total-row-r{font-weight:700;font-size:.98rem;border-top:2px solid var(--text);margin-top:8px;padding-top:8px;}
+    .receipt .rc-footer{text-align:center;font-size:.76rem;color:var(--muted);margin-top:14px;}
+
+    /* Toast */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);z-index:999;background:var(--text);color:var(--card);padding:12px 18px;border-radius:12px;font-size:.84rem;font-weight:600;display:flex;align-items:center;gap:9px;box-shadow:0 8px 32px rgba(0,0,0,.2);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;}
+    .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+    .toast.success{background:var(--success);}
+    .toast.error{background:var(--danger);}
+
+    /* Mobile comanda: stack panels */
+    @media(max-width:640px){
+      .comanda-wrap{grid-template-columns:1fr;}
+      .panel{min-height:auto;}
+      .tables-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));}
+      .main{padding:16px 12px;}
+    }
+
+    @media print{body *{visibility:hidden;}#precuenta-print,#precuenta-print *{visibility:visible;}#precuenta-print{position:fixed;left:50%;top:0;transform:translateX(-50%);}}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><i class="fa-solid fa-user-tie"></i></div>
+    <h1 class="login-title">Portal Mesero</h1>
+    <p class="login-sub">Ingresa tus credenciales para continuar</p>
+    <div class="form-group">
+      <label class="form-label">Usuario</label>
+      <input type="text" id="login-user" class="form-input" placeholder="Ej: carlos" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <input type="password" id="login-pass" class="form-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-login" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i> &nbsp;Ingresar</button>
+    <div class="login-error" id="login-error"><i class="fa-solid fa-circle-exclamation"></i> Usuario o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo" id="tb-logo"><i class="fa-solid fa-utensils"></i></div>
+      <span class="topbar-name" id="tb-name">Restaurante</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="topbar-user"><i class="fa-solid fa-circle-user"></i> <strong id="tb-mesero">Mesero</strong></div>
+      <button class="btn-logout" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i> Salir</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- VIEW: TABLES -->
+    <div class="view active" id="view-tables">
+      <div class="view-header">
+        <div><div class="view-title">Mesas</div><div class="view-sub">Selecciona una mesa para tomar la orden</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="loadAndRender()"><i class="fa-solid fa-rotate-right"></i> Actualizar</button>
+      </div>
+      <div class="area-tabs" id="area-tabs"></div>
+      <div class="tables-grid" id="tables-grid"></div>
+      <div class="empty-state" id="tables-empty" style="display:none;"><i class="fa-solid fa-table-cells-large"></i><p>No hay mesas configuradas.</p></div>
+    </div>
+
+    <!-- VIEW: COMANDA -->
+    <div class="view" id="view-comanda">
+      <button class="back-btn" onclick="goTables()"><i class="fa-solid fa-arrow-left"></i> Volver a Mesas</button>
+      <div class="mesa-bar">
+        <div class="mesa-bar-num" id="cb-num">Mesa #1</div>
+        <div class="mesa-bar-info">
+          <div id="cb-area" style="font-size:.85rem;color:rgba(255,255,255,.7);">Salón</div>
+          <div id="cb-who" style="font-size:.75rem;color:rgba(255,255,255,.45);margin-top:2px;"></div>
+        </div>
+        <div class="mesa-bar-total" id="cb-total">$0.00</div>
+      </div>
+      <div class="comanda-wrap">
+        <!-- Left: Order -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title"><i class="fa-solid fa-receipt" style="color:var(--gold)"></i> Orden</span>
+            <button class="btn btn-danger btn-sm" onclick="clearOrder()"><i class="fa-solid fa-trash"></i></button>
+          </div>
+          <div class="panel-body" id="order-list">
+            <p style="text-align:center;padding:40px 0;color:var(--muted);font-size:.875rem;">Sin platos aún.</p>
+          </div>
+          <div class="panel-footer">
+            <div class="total-row">
+              <span class="total-label">Total de la cuenta</span>
+              <span class="total-val" id="order-total">$0.00</span>
+            </div>
+            <div class="action-row">
+              <button class="btn btn-ghost btn-sm" onclick="openPrecuenta()"><i class="fa-solid fa-file-invoice"></i> Pre-cuenta</button>
+              <button class="btn btn-success" onclick="enviarCocina()"><i class="fa-solid fa-bell-concierge"></i> Enviar a Cocina</button>
+            </div>
+          </div>
+        </div>
+        <!-- Right: Menu -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title"><i class="fa-solid fa-bowl-food" style="color:var(--gold)"></i> Agregar Platos</span>
+          </div>
+          <div class="panel-body">
+            <div class="cat-tabs" id="cat-tabs"></div>
+            <div id="menu-items"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRE-CUENTA MODAL -->
+<div class="modal-overlay" id="modal-precuenta">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Pre-cuenta</span>
+      <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body"><div id="precuenta-print"></div></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cerrar</button>
+      <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i id="toast-icon" class="fa-solid fa-circle-check"></i><span id="toast-msg"></span></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+let currentUser = null;   // { id, name, username, role }
+let currentTableId = null;
+let currentCatId = null;
+let activeArea = "Todas";
+let data = {};
+
+// ── DATA ───────────────────────────────────────────────
+function loadData(){
+  try{ data = JSON.parse(localStorage.getItem('restaurante_data') || '{}'); }
+  catch(e){ data = {}; }
+  if(!data.tables) data.tables = [];
+  if(!data.orders) data.orders = [];
+  if(!data.menu)   data.menu   = [];
+  if(!data.areas)  data.areas  = [];
+}
+function saveData(){ localStorage.setItem('restaurante_data', JSON.stringify(data)); }
+function nextId(arr){ return arr.length ? Math.max(...arr.map(x=>x.id))+1 : 1; }
+function fmt(n){ return '$' + parseFloat(n||0).toFixed(2); }
+function elapsed(iso){
+  const ms = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(ms/60000), s = Math.floor((ms%60000)/1000);
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// ── AUTH ───────────────────────────────────────────────
+function doLogin(){
+  loadData();
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  const users = data.users || [];
+  const found = users.find(x => x.username === u && x.password === p && x.role === 'mesero');
+  if(!found){
+    document.getElementById('login-error').style.display = 'flex';
+    return;
+  }
+  currentUser = found;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  initApp();
+}
+function doLogout(){
+  currentUser = null; currentTableId = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+// ── INIT ───────────────────────────────────────────────
+function initApp(){
+  loadData();
+  const r = data.restaurant || {};
+  document.getElementById('tb-name').textContent = r.name || 'Restaurante';
+  document.getElementById('tb-mesero').textContent = currentUser.name;
+  const logo = document.getElementById('tb-logo');
+  logo.innerHTML = r.logo ? `<img src="${r.logo}" alt="">` : `<i class="fa-solid fa-utensils"></i>`;
+  renderTables();
+  // Listen for updates from other tabs (cocina marking things ready)
+  window.addEventListener('storage', e => {
+    if(e.key === 'restaurante_data'){ loadData(); if(currentTableId) renderOrder(); }
+  });
+}
+
+// ── TABLES VIEW ────────────────────────────────────────
+function loadAndRender(){ loadData(); renderTables(); }
+
+function renderTables(){
+  const tables = data.tables || [];
+  const areas  = data.areas  || [];
+  const all    = ['Todas', ...areas];
+
+  document.getElementById('area-tabs').innerHTML = all.map(a =>
+    `<button class="area-tab ${a===activeArea?'active':''}" onclick="filterArea('${a}')">${a}</button>`
+  ).join('');
+
+  const filtered = activeArea === 'Todas' ? tables : tables.filter(t => t.area === activeArea);
+  const grid  = document.getElementById('tables-grid');
+  const empty = document.getElementById('tables-empty');
+  if(!filtered.length){ grid.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+
+  grid.innerHTML = filtered.map(t => {
+    const order = getOrder(t.id);
+    const who   = order && order.createdBy ? order.createdBy.name : '';
+    return `<div class="table-card ${t.status}" onclick="handleTable(${t.id})">
+      <div class="table-number">${t.number}</div>
+      <div class="table-area">${t.area}</div>
+      <div class="table-cap"><i class="fa-solid fa-user" style="font-size:.6rem;"></i> ${t.capacity}</div>
+      <div class="table-dot ${t.status}"></div>
+      ${who ? `<div class="table-mesero">${who}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function filterArea(a){ activeArea = a; renderTables(); }
+
+function handleTable(id){
+  loadData();
+  const t = data.tables.find(x => x.id === id);
+  if(!t) return;
+  // If free, open it
+  if(t.status === 'libre'){
+    t.status = 'ocupada';
+    if(!getOrder(id)){
+      data.orders.push({
+        id: nextId(data.orders), tableId: id, items: [],
+        openedAt: new Date().toISOString(),
+        createdBy: { id: currentUser.id, name: currentUser.name }
+      });
+    }
+    saveData();
+  }
+  openComanda(id);
+}
+
+// ── COMANDA ────────────────────────────────────────────
+function openComanda(tableId){
+  currentTableId = tableId;
+  currentCatId   = null;
+  const t = data.tables.find(x => x.id === tableId);
+  if(!t) return;
+  const order = getOrder(tableId);
+  document.getElementById('cb-num').textContent  = `Mesa #${t.number}`;
+  document.getElementById('cb-area').textContent = t.area;
+  document.getElementById('cb-who').textContent  = order && order.createdBy
+    ? `Mesero: ${order.createdBy.name}` : '';
+  showView('view-comanda');
+  renderMenuPicker();
+  renderOrder();
+}
+
+function goTables(){
+  currentTableId = null;
+  loadData();
+  renderTables();
+  showView('view-tables');
+}
+
+function getOrder(tableId){ return (data.orders||[]).find(o => o.tableId === tableId); }
+
+function orderTotal(order){ return (order.items||[]).reduce((s,i)=>s+i.price*i.qty,0); }
+
+function renderOrder(){
+  const order = getOrder(currentTableId);
+  const list  = document.getElementById('order-list');
+  const total = orderTotal(order||{});
+  document.getElementById('order-total').textContent = fmt(total);
+  document.getElementById('cb-total').textContent    = fmt(total);
+
+  if(!order || !order.items.length){
+    list.innerHTML = '<p style="text-align:center;padding:40px 0;color:var(--muted);font-size:.85rem;">Sin platos aún.<br>Selecciona del menú →</p>';
+    return;
+  }
+  list.innerHTML = order.items.map(item => `
+    <div class="order-item">
+      <div class="oi-top"><span class="oi-cat">${item.cat}</span></div>
+      <div class="oi-top">
+        <span class="oi-name">${item.name}</span>
+        <span class="oi-price">${fmt(item.price*item.qty)}</span>
+        <button class="oi-del" onclick="removeItem('${item.lineId}')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="qty-row">
+        <button class="qty-btn" onclick="changeQty('${item.lineId}',-1)">−</button>
+        <span class="qty-val">${item.qty}</span>
+        <button class="qty-btn" onclick="changeQty('${item.lineId}',1)">+</button>
+        <span style="font-size:.76rem;color:var(--muted);">${fmt(item.price)} c/u</span>
+      </div>
+      <input type="text" class="note-input" placeholder="Nota: sin sal, término…"
+        value="${item.note||''}" oninput="setNote('${item.lineId}',this.value)">
+    </div>`).join('');
+}
+
+function renderMenuPicker(){
+  const cats = data.menu || [];
+  if(!cats.length){ document.getElementById('cat-tabs').innerHTML=''; document.getElementById('menu-items').innerHTML='<p style="color:var(--muted);font-size:.83rem;">Sin menú.</p>'; return; }
+  if(!currentCatId || !cats.find(c=>c.id===currentCatId)) currentCatId = cats[0].id;
+
+  document.getElementById('cat-tabs').innerHTML = cats.map(c =>
+    `<button class="cat-tab ${c.id===currentCatId?'active':''}" onclick="switchCat(${c.id})">${c.name}</button>`
+  ).join('');
+
+  const cat = cats.find(c=>c.id===currentCatId);
+  document.getElementById('menu-items').innerHTML = (cat?cat.items:[]).map(item => `
+    <div class="menu-item-row">
+      <div class="mi-info">
+        <div class="mi-name">${item.name}</div>
+        ${item.description?`<div class="mi-desc">${item.description}</div>`:''}
+      </div>
+      <span class="mi-price">${fmt(item.price)}</span>
+      <button class="add-btn" onclick="addItem(${item.id},${currentCatId})"><i class="fa-solid fa-plus"></i></button>
+    </div>`).join('');
+}
+
+function switchCat(id){ currentCatId = id; renderMenuPicker(); }
+
+function addItem(itemId, catId){
+  const cat  = data.menu.find(c=>c.id===catId);
+  const item = cat && cat.items.find(i=>i.id===itemId);
+  if(!item) return;
+
+  let order = getOrder(currentTableId);
+  if(!order){
+    order = {id:nextId(data.orders),tableId:currentTableId,items:[],openedAt:new Date().toISOString(),
+              createdBy:{id:currentUser.id,name:currentUser.name}};
+    data.orders.push(order);
+  }
+  // update createdBy if this mesero is adding to an existing order
+  if(!order.createdBy) order.createdBy = {id:currentUser.id, name:currentUser.name};
+
+  const existing = order.items.find(x=>x.menuItemId===itemId && !x.note);
+  if(existing){ existing.qty++; }
+  else{
+    order.items.push({lineId:Date.now()+'_'+itemId,menuItemId:itemId,
+      name:item.name,price:item.price,qty:1,note:'',cat:cat.name,ready:false});
+  }
+  const t = data.tables.find(x=>x.id===currentTableId);
+  if(t) t.status = 'ocupada';
+  saveData();
+  renderOrder();
+  toast(`${item.name} agregado`,'success');
+}
+
+function removeItem(lineId){
+  const order = getOrder(currentTableId); if(!order) return;
+  order.items = order.items.filter(i=>i.lineId!=lineId);
+  saveData(); renderOrder();
+}
+function changeQty(lineId, delta){
+  const order = getOrder(currentTableId); if(!order) return;
+  const item  = order.items.find(i=>i.lineId==lineId); if(!item) return;
+  item.qty = Math.max(1, item.qty+delta);
+  saveData(); renderOrder();
+}
+function setNote(lineId, val){
+  const order = getOrder(currentTableId); if(!order) return;
+  const item  = order.items.find(i=>i.lineId==lineId);
+  if(item){ item.note = val; saveData(); }
+}
+function clearOrder(){
+  if(!confirm('¿Limpiar todos los ítems?')) return;
+  const order = getOrder(currentTableId); if(order) order.items = [];
+  saveData(); renderOrder(); toast('Orden limpiada','success');
+}
+
+// ── ENVIAR A COCINA ────────────────────────────────────
+function enviarCocina(){
+  const order = getOrder(currentTableId);
+  if(!order || !order.items.length) return toast('No hay platos en la orden','error');
+  // Mark all items as pending (reset ready flag)
+  order.items.forEach(i=>i.ready=false);
+  order.sentAt = new Date().toISOString();
+  saveData();
+  toast('¡Orden enviada a cocina!','success');
+}
+
+// ── PRE-CUENTA ─────────────────────────────────────────
+function openPrecuenta(){
+  const order = getOrder(currentTableId);
+  const t     = data.tables.find(x=>x.id===currentTableId);
+  const r     = data.restaurant || {};
+  const now   = new Date().toLocaleString('es',{dateStyle:'short',timeStyle:'short'});
+  const items = order ? order.items : [];
+  const total = orderTotal(order||{});
+  const mesero= order && order.createdBy ? order.createdBy.name : currentUser.name;
+
+  document.getElementById('precuenta-print').innerHTML = `
+    <div class="receipt">
+      <h2>${r.name||'Restaurante'}</h2>
+      <div class="rc-meta">${r.address||''}<br>${now}</div>
+      <div class="rc-div"></div>
+      <div class="rc-row"><span>Mesa #${t?t.number:'?'}</span><span>${t?t.area:''}</span></div>
+      <div class="rc-row"><span>Mesero</span><span>${mesero}</span></div>
+      <div class="rc-div"></div>
+      ${items.map(i=>`<div class="rc-row"><span>${i.qty}x ${i.name}${i.note?` <em>(${i.note})</em>`:''}</span><span>${fmt(i.price*i.qty)}</span></div>`).join('')}
+      <div class="rc-row total-row-r"><span>TOTAL</span><span>${fmt(total)}</span></div>
+      <div class="rc-div"></div>
+      <div class="rc-footer">¡Gracias por su visita!</div>
+    </div>`;
+  document.getElementById('modal-precuenta').classList.add('open');
+}
+function closeModal(){ document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); }
+document.addEventListener('click', e=>{ if(e.target.classList.contains('modal-overlay')) closeModal(); });
+
+// ── HELPERS ────────────────────────────────────────────
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+let toastTimer;
+function toast(msg, type='success'){
+  const el  = document.getElementById('toast');
+  const ico = document.getElementById('toast-icon');
+  document.getElementById('toast-msg').textContent = msg;
+  el.className = `toast show ${type}`;
+  ico.className = type==='success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
