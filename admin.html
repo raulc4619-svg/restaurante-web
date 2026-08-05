@@ -805,7 +805,10 @@ function doLogout(){
 }
 
 // Iniciar con sesión de login.html
-document.addEventListener('DOMContentLoaded', renderApp);
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('app').style.display = 'block';
+  renderApp();
+});
 
 // PAGES
 const pageTitles={dashboard:'Dashboard',mesas:'Mesas',cobro:'Comanda',info:'Info del Restaurante',menu:'Menú',promos:'Promociones',settings:'Configuración'};
