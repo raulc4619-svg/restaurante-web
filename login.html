@@ -117,6 +117,13 @@
 </div>
 
 <script>
+const DEFAULT_USERS = [
+  {id:1,name:"Carlos López",username:"carlos",password:"mesa123",role:"mesero"},
+  {id:2,name:"Ana García",username:"ana",password:"mesa123",role:"mesero"},
+  {id:3,name:"Cocina Central",username:"cocina",password:"cocina123",role:"cocina"}
+];
+const DEFAULT_ADMIN = { username:"admin", password:"admin123" };
+
 function loadData(){
   try{ return JSON.parse(localStorage.getItem('restaurante_data')||'{}'); }
   catch(e){ return {}; }
@@ -137,17 +144,17 @@ function doLogin(){
 
   const data = loadData();
 
-  // Check admin
-  const adminUser = data.adminUsername || 'admin';
-  const adminPass = data.adminPassword || 'admin123';
+  // Check admin (localStorage primero, luego default)
+  const adminUser = data.adminUsername || DEFAULT_ADMIN.username;
+  const adminPass = data.adminPassword || DEFAULT_ADMIN.password;
   if(username === adminUser && password === adminPass){
     sessionStorage.setItem('restaurante_session', JSON.stringify({id:0, name:'Administrador', username:adminUser, role:'admin'}));
     window.location.href = 'admin.html';
     return;
   }
 
-  // Check meseros and cocina
-  const users = data.users || [];
+  // Check meseros y cocina (localStorage primero, luego defaults)
+  const users = (data.users && data.users.length) ? data.users : DEFAULT_USERS;
   const found = users.find(u => u.username === username && u.password === password);
   if(found){
     sessionStorage.setItem('restaurante_session', JSON.stringify({id:found.id, name:found.name, username:found.username, role:found.role}));
