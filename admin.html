@@ -288,6 +288,8 @@
       .stats-grid{grid-template-columns:1fr 1fr;gap:10px;}
     }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -769,17 +771,43 @@ let currentTableId=null;
 let currentMenuCatId=null;
 let activeAreaFilter="Todas";
 
-function loadData(){
-  try{const s=localStorage.getItem('restaurante_data');data=s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT));}
-  catch(e){data=JSON.parse(JSON.stringify(DEFAULT));}
-  // Migrate: fill in missing top-level keys from DEFAULT
-  if(!data.areas)data.areas=JSON.parse(JSON.stringify(DEFAULT.areas));
-  if(!data.tables)data.tables=JSON.parse(JSON.stringify(DEFAULT.tables));
-  if(!data.orders)data.orders=[];
-  if(!data.users)data.users=JSON.parse(JSON.stringify(DEFAULT.users));
-  if(!data.adminUsername)data.adminUsername='admin';
+// ── FIREBASE ────────────────────────────────────────────
+const firebaseConfig={apiKey:"AIzaSyBG8kFBatDKuuT0BufcqXTuSKpgcd0ps2Y",authDomain:"restauranteweb-35874.firebaseapp.com",databaseURL:"https://restauranteweb-35874-default-rtdb.firebaseio.com",projectId:"restauranteweb-35874",storageBucket:"restauranteweb-35874.firebasestorage.app",messagingSenderId:"403673864105",appId:"1:403673864105:web:3d79b786a9739739a9d6b8"};
+firebase.initializeApp(firebaseConfig);
+const dbRef=firebase.database().ref('restaurante_data');
+let fbReady=false;
+
+function fixArr(v){if(!v)return[];if(Array.isArray(v))return v;return Object.values(v).filter(x=>x!==null);}
+function fixData(d){
+  if(!d)return;
+  d.areas=fixArr(d.areas);
+  d.tables=fixArr(d.tables);
+  d.orders=fixArr(d.orders).map(o=>({...o,items:fixArr(o.items)}));
+  d.users=fixArr(d.users);
+  d.promotions=fixArr(d.promotions);
+  if(d.menu)d.menu=fixArr(d.menu).map(c=>({...c,items:fixArr(c.items)}));
+  if(!d.adminUsername)d.adminUsername='admin';
 }
-function saveData(){localStorage.setItem('restaurante_data',JSON.stringify(data));}
+
+function loadData(){/* data sincronizado por Firebase onValue */}
+function saveData(){dbRef.set(data);}
+
+// Listener en tiempo real
+dbRef.on('value',snap=>{
+  const fd=snap.val();
+  if(fd){fixData(fd);data=fd;}
+  else{data=JSON.parse(JSON.stringify(DEFAULT));saveData();}
+  if(!fbReady){
+    fbReady=true;
+    if(document.readyState!=='loading')renderApp();
+    else document.addEventListener('DOMContentLoaded',renderApp);
+  }else{
+    // Actualizar vista actual sin interrumpir al usuario
+    const ap=document.querySelector('.page.active');
+    if(ap&&ap.id==='page-dashboard')renderDashboard();
+    if(ap&&ap.id==='page-mesas')renderMesasPage();
+  }
+});
 function nextId(arr){return arr.length?Math.max(...arr.map(x=>x.id))+1:1;}
 function fmt(n){return '$'+parseFloat(n||0).toFixed(2);}
 

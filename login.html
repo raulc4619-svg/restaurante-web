@@ -54,6 +54,8 @@
 
     @media(max-width:480px){.card{padding:32px 24px;}.brand-logo{width:58px;height:58px;}}
   </style>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
 <div class="card">
@@ -117,6 +119,19 @@
 </div>
 
 <script>
+// ── FIREBASE ────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBG8kFBatDKuuT0BufcqXTuSKpgcd0ps2Y",
+  authDomain: "restauranteweb-35874.firebaseapp.com",
+  databaseURL: "https://restauranteweb-35874-default-rtdb.firebaseio.com",
+  projectId: "restauranteweb-35874",
+  storageBucket: "restauranteweb-35874.firebasestorage.app",
+  messagingSenderId: "403673864105",
+  appId: "1:403673864105:web:3d79b786a9739739a9d6b8"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 const DEFAULT_USERS = [
   {id:1,name:"Carlos López",username:"carlos",password:"mesa123",role:"mesero"},
   {id:2,name:"Ana García",username:"ana",password:"mesa123",role:"mesero"},
@@ -124,10 +139,7 @@ const DEFAULT_USERS = [
 ];
 const DEFAULT_ADMIN = { username:"admin", password:"admin123" };
 
-function loadData(){
-  try{ return JSON.parse(localStorage.getItem('restaurante_data')||'{}'); }
-  catch(e){ return {}; }
-}
+function fixArr(v){ if(!v) return []; if(Array.isArray(v)) return v; return Object.values(v).filter(x=>x!==null); }
 
 function doLogin(){
   const username = document.getElementById('inp-user').value.trim();
@@ -136,50 +148,54 @@ function doLogin(){
   errBox.style.display = 'none';
   document.getElementById('inp-user').classList.remove('err');
   document.getElementById('inp-pass').classList.remove('err');
+  if(!username || !password){ errBox.style.display='flex'; return; }
 
-  if(!username || !password){
+  // Mostrar cargando
+  const btn = document.querySelector('.btn-login');
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
+  btn.disabled = true;
+
+  db.ref('restaurante_data').once('value').then(snap => {
+    const fbData = snap.val() || {};
+    const adminUser = fbData.adminUsername || DEFAULT_ADMIN.username;
+    const adminPass = fbData.adminPassword || DEFAULT_ADMIN.password;
+
+    if(username === adminUser && password === adminPass){
+      sessionStorage.setItem('restaurante_session', JSON.stringify({id:0,name:'Administrador',username:adminUser,role:'admin'}));
+      window.location.href = 'admin.html';
+      return;
+    }
+
+    const users = fixArr(fbData.users).length ? fixArr(fbData.users) : DEFAULT_USERS;
+    const found = users.find(u => u.username===username && u.password===password);
+    if(found){
+      sessionStorage.setItem('restaurante_session', JSON.stringify({id:found.id,name:found.name,username:found.username,role:found.role}));
+      if(found.role==='mesero')      window.location.href='mesero.html';
+      else if(found.role==='cocina') window.location.href='cocina.html';
+      else                           window.location.href='admin.html';
+      return;
+    }
+
+    // Falló
     errBox.style.display = 'flex';
-    return;
-  }
-
-  const data = loadData();
-
-  // Check admin (localStorage primero, luego default)
-  const adminUser = data.adminUsername || DEFAULT_ADMIN.username;
-  const adminPass = data.adminPassword || DEFAULT_ADMIN.password;
-  if(username === adminUser && password === adminPass){
-    sessionStorage.setItem('restaurante_session', JSON.stringify({id:0, name:'Administrador', username:adminUser, role:'admin'}));
-    window.location.href = 'admin.html';
-    return;
-  }
-
-  // Check meseros y cocina (localStorage primero, luego defaults)
-  const users = (data.users && data.users.length) ? data.users : DEFAULT_USERS;
-  const found = users.find(u => u.username === username && u.password === password);
-  if(found){
-    sessionStorage.setItem('restaurante_session', JSON.stringify({id:found.id, name:found.name, username:found.username, role:found.role}));
-    if(found.role === 'mesero')       window.location.href = 'mesero.html';
-    else if(found.role === 'cocina')  window.location.href = 'cocina.html';
-    else                              window.location.href = 'admin.html';
-    return;
-  }
-
-  // Failed
-  errBox.style.display = 'flex';
-  document.getElementById('inp-user').classList.add('err');
-  document.getElementById('inp-pass').classList.add('err');
+    document.getElementById('inp-user').classList.add('err');
+    document.getElementById('inp-pass').classList.add('err');
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Ingresar';
+    btn.disabled = false;
+  }).catch(()=>{
+    errBox.querySelector('span').textContent = 'Error de conexión. Verifica tu internet.';
+    errBox.style.display = 'flex';
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Ingresar';
+    btn.disabled = false;
+  });
 }
 
-// Load restaurant branding
-(function(){
-  const data = loadData();
-  const r = data.restaurant || {};
-  if(r.name)  document.getElementById('brand-name').textContent = r.name;
-  if(r.logo){
-    const logo = document.getElementById('brand-logo');
-    logo.innerHTML = `<img src="${r.logo}" alt="">`;
-  }
-})();
+// Cargar branding desde Firebase
+db.ref('restaurante_data/restaurant').once('value').then(snap=>{
+  const r = snap.val() || {};
+  if(r.name) document.getElementById('brand-name').textContent = r.name;
+  if(r.logo){ document.getElementById('brand-logo').innerHTML=`<img src="${r.logo}" alt="">`; }
+});
 </script>
 </body>
 </html>
