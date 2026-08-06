@@ -272,6 +272,44 @@
       #cobro-ticket-print{position:fixed;left:50%;top:0;transform:translateX(-50%);}
     }
 
+    /* CIERRE DE CAJA */
+    .caja-filtros{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;}
+    .caja-filtros input[type=date]{padding:9px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text);font-size:.88rem;font-family:inherit;outline:none;}
+    .caja-filtros input[type=date]:focus{border-color:var(--navy);}
+    .caja-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+    .caja-kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;}
+    .caja-kpi-label{font-size:.73rem;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;}
+    .caja-kpi-val{font-size:1.7rem;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;line-height:1;}
+    .caja-kpi-sub{font-size:.75rem;color:var(--muted);margin-top:5px;}
+    .caja-kpi.highlight{border-color:var(--gold);background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.03));}
+    .caja-kpi.highlight .caja-kpi-val{color:var(--gold);}
+    .caja-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;}
+    .caja-seccion{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+    .caja-seccion-header{padding:13px 18px;border-bottom:1px solid var(--border);font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:8px;}
+    .caja-seccion-body{padding:14px 18px;}
+    .caja-metodo-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:.875rem;}
+    .caja-metodo-row:last-child{border-bottom:none;font-weight:700;color:var(--navy);}
+    .caja-bar{height:8px;border-radius:100px;background:var(--border);margin-top:6px;overflow:hidden;}
+    .caja-bar-fill{height:100%;border-radius:100px;background:var(--navy);transition:width .4s ease;}
+    .caja-producto-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:.84rem;}
+    .caja-producto-row:last-child{border-bottom:none;}
+    .caja-producto-qty{font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:100px;background:var(--input-bg);color:var(--muted);margin-left:8px;}
+    .caja-ventas-table{width:100%;border-collapse:collapse;font-size:.83rem;}
+    .caja-ventas-table th{text-align:left;padding:9px 12px;font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;border-bottom:2px solid var(--border);}
+    .caja-ventas-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+    .caja-ventas-table tr:last-child td{border-bottom:none;}
+    .caja-ventas-table tr:hover td{background:var(--input-bg);}
+    .caja-print-header{display:none;}
+    @media print{
+      .topbar,.sidebar,.back-btn,.page-header,.caja-filtros,.btn{display:none!important;}
+      .caja-print-header{display:block;text-align:center;margin-bottom:16px;}
+      .caja-kpis{grid-template-columns:repeat(2,1fr);}
+      .caja-grid{grid-template-columns:1fr;}
+      body,#app{background:#fff;}
+    }
+    @media(max-width:900px){.caja-kpis{grid-template-columns:1fr 1fr;}.caja-grid{grid-template-columns:1fr;}}
+    @media(max-width:500px){.caja-kpis{grid-template-columns:1fr 1fr;}}
+
     /* COBRO SEPARADO */
     .split-result{background:var(--input-bg);border-radius:10px;padding:16px;text-align:center;margin-top:16px;}
     .split-amount{font-size:2.2rem;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;}
@@ -332,6 +370,7 @@
       <div class="sidebar-section-label">Operaciones</div>
       <button class="nav-item" onclick="goPage('mesas')" id="nav-mesas"><i class="fa-solid fa-table-cells-large"></i> Mesas <span class="nav-badge" id="badge-ocupadas" style="display:none">0</span></button>
       <button class="nav-item" onclick="goPage('cobro')" id="nav-cobro" style="display:none"><i class="fa-solid fa-receipt"></i> <span id="nav-cobro-label">Comanda</span></button>
+      <button class="nav-item" onclick="goPage('caja')"><i class="fa-solid fa-cash-register"></i> Cierre de Caja</button>
       <div class="sidebar-section-label">Contenido</div>
       <button class="nav-item" onclick="goPage('info')"><i class="fa-solid fa-store"></i> Info del Restaurante</button>
       <button class="nav-item" onclick="goPage('menu')"><i class="fa-solid fa-book-open"></i> Menú</button>
@@ -548,6 +587,50 @@
         </div></div></div>
         <div style="background:var(--input-bg);border-radius:10px;padding:14px 18px;font-size:.8rem;color:var(--muted);margin-top:12px;">
           <i class="fa-solid fa-circle-info"></i> &nbsp;Los meseros ingresan desde <strong>mesero.html</strong> · El personal de cocina desde <strong>cocina.html</strong>
+        </div>
+      </div>
+
+      <!-- CIERRE DE CAJA -->
+      <div class="page" id="page-caja">
+        <div class="page-header">
+          <div class="page-header-top">
+            <div><h1 class="page-h1">Cierre de Caja</h1><p class="page-p">Resumen de ventas por día</p></div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-ghost btn-sm" onclick="limpiarVentasDia()"><i class="fa-solid fa-trash"></i> Limpiar día</button>
+              <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir reporte</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cabecera de impresión (solo visible al imprimir) -->
+        <div class="caja-print-header" id="caja-print-header"></div>
+
+        <!-- Filtro de fecha -->
+        <div class="caja-filtros">
+          <label style="font-size:.82rem;font-weight:700;color:var(--muted);">Fecha:</label>
+          <input type="date" id="caja-fecha" onchange="renderCajaPage()">
+          <button class="btn btn-ghost btn-sm" onclick="setCajaHoy()"><i class="fa-solid fa-calendar-day"></i> Hoy</button>
+        </div>
+
+        <!-- KPIs -->
+        <div class="caja-kpis" id="caja-kpis"></div>
+
+        <!-- Gráficos y desglose -->
+        <div class="caja-grid" id="caja-grid"></div>
+
+        <!-- Detalle de ventas -->
+        <div class="caja-seccion">
+          <div class="caja-seccion-header"><i class="fa-solid fa-list" style="color:var(--gold)"></i> Detalle de ventas</div>
+          <div class="caja-seccion-body" style="padding:0;">
+            <div class="table-wrap"><table class="caja-ventas-table">
+              <thead><tr><th>Hora</th><th>Mesa</th><th>Área</th><th>Mesero</th><th>Ítems</th><th style="text-align:right">Total</th></tr></thead>
+              <tbody id="caja-ventas-tbody"></tbody>
+            </table></div>
+            <div id="caja-empty" style="display:none;text-align:center;padding:50px 0;color:var(--muted);">
+              <i class="fa-solid fa-cash-register" style="font-size:2.5rem;opacity:.2;display:block;margin-bottom:12px;"></i>
+              <p>No hay ventas registradas para esta fecha.</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -813,6 +896,7 @@
 
 <script>
 const DEFAULT = {
+  ventas:[],
   restaurant:{name:"La Mesa Dorada",tagline:"Sabor que une familias",description:"Un espacio donde cada plato cuenta una historia.",banner:"",logo:"",phone:"+1 (555) 123-4567",address:"Av. Principal 123, Ciudad",email:"info@lamesadorada.com",hours:"Lun-Dom: 12:00 - 22:00"},
   menu:[
     {id:1,name:"Entradas",items:[{id:101,name:"Ensalada César",price:12.99,description:"Lechuga romana, crutones, parmesano",image:""},{id:102,name:"Sopa del Día",price:8.50,description:"Ingredientes frescos de temporada",image:""},{id:103,name:"Ceviche Clásico",price:14.99,description:"Pescado fresco marinado en limón",image:""}]},
@@ -870,6 +954,7 @@ function fixData(d){
   d.promotions=fixArr(d.promotions);
   if(d.menu)d.menu=fixArr(d.menu).map(c=>({...c,items:fixArr(c.items)}));
   if(!d.adminUsername)d.adminUsername='admin';
+  d.ventas=fixArr(d.ventas).map(v=>({...v,items:fixArr(v.items)}));
 }
 
 function loadData(){/* data sincronizado por Firebase onValue */}
@@ -922,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 // PAGES
-const pageTitles={dashboard:'Dashboard',mesas:'Mesas',cobro:'Comanda',info:'Info del Restaurante',menu:'Menú',promos:'Promociones',settings:'Configuración'};
+const pageTitles={dashboard:'Dashboard',mesas:'Mesas',cobro:'Comanda',caja:'Cierre de Caja',info:'Info del Restaurante',menu:'Menú',promos:'Promociones',settings:'Configuración'};
 function goPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -932,6 +1017,7 @@ function goPage(id){
   if(id==='dashboard')renderDashboard();
   if(id==='mesas')renderMesasPage();
   if(id==='cobro')renderCobroPage();
+  if(id==='caja')renderCajaPage();
   if(id==='info')renderInfoPage();
   if(id==='menu')renderMenuPage();
   if(id==='promos')renderPromosPage();
@@ -1271,6 +1357,21 @@ function openCobrarTicket(){
 
 function confirmarCobro(){
   const t=data.tables.find(x=>x.id===currentTableId);
+  const order=getOrder(currentTableId);
+  // Registrar la venta en el historial
+  if(order){
+    if(!data.ventas)data.ventas=[];
+    data.ventas.push({
+      id: Date.now(),
+      fecha: new Date().toISOString(),
+      tableId: currentTableId,
+      tableNumber: t?t.number:currentTableId,
+      area: t?t.area:'—',
+      mesero: (order.createdBy&&order.createdBy.name)||'Administrador',
+      items: order.items.map(i=>({name:i.name,price:i.price,qty:i.qty})),
+      total: orderTotal(order)
+    });
+  }
   if(t)t.status='libre';
   data.orders=data.orders.filter(o=>o.tableId!==currentTableId);
   currentTableId=null;
@@ -1407,6 +1508,148 @@ function setTableStatus(status){
   if(t){t.status=status;saveData();updateOccupiedBadge();renderCobroPage();}
   closeModal('modal-status');
   toast('Estado actualizado','success');
+}
+
+// ── CIERRE DE CAJA ───────────────────────────────────────────────────────────
+function fechaLocal(isoStr){
+  // Convierte ISO a YYYY-MM-DD en zona local
+  const d = new Date(isoStr);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function setCajaHoy(){
+  const hoy = fechaLocal(new Date().toISOString());
+  document.getElementById('caja-fecha').value = hoy;
+  renderCajaPage();
+}
+
+function renderCajaPage(){
+  // Inicializar fecha a hoy si está vacía
+  const inp = document.getElementById('caja-fecha');
+  if(!inp.value) inp.value = fechaLocal(new Date().toISOString());
+  const fechaSel = inp.value;
+
+  const ventas = (data.ventas||[]).filter(v => fechaLocal(v.fecha) === fechaSel);
+
+  // ── KPIs ──────────────────────────────────────────────────────────────────
+  const totalDia    = ventas.reduce((a,v) => a + v.total, 0);
+  const totalItems  = ventas.reduce((a,v) => a + v.items.reduce((b,i) => b+i.qty, 0), 0);
+  const ticketProm  = ventas.length ? totalDia / ventas.length : 0;
+  const mesasAtend  = new Set(ventas.map(v => v.tableId)).size;
+
+  document.getElementById('caja-kpis').innerHTML = `
+    <div class="caja-kpi highlight">
+      <div class="caja-kpi-label"><i class="fa-solid fa-dollar-sign"></i> Total del día</div>
+      <div class="caja-kpi-val">${fmt(totalDia)}</div>
+      <div class="caja-kpi-sub">${ventas.length} cobro${ventas.length!==1?'s':''} registrado${ventas.length!==1?'s':''}</div>
+    </div>
+    <div class="caja-kpi">
+      <div class="caja-kpi-label"><i class="fa-solid fa-table-cells-large"></i> Mesas atendidas</div>
+      <div class="caja-kpi-val">${mesasAtend}</div>
+      <div class="caja-kpi-sub">mesas distintas</div>
+    </div>
+    <div class="caja-kpi">
+      <div class="caja-kpi-label"><i class="fa-solid fa-bowl-food"></i> Platos servidos</div>
+      <div class="caja-kpi-val">${totalItems}</div>
+      <div class="caja-kpi-sub">ítems en total</div>
+    </div>
+    <div class="caja-kpi">
+      <div class="caja-kpi-label"><i class="fa-solid fa-receipt"></i> Ticket promedio</div>
+      <div class="caja-kpi-val">${fmt(ticketProm)}</div>
+      <div class="caja-kpi-sub">por mesa</div>
+    </div>`;
+
+  // ── PRODUCTOS MÁS VENDIDOS ─────────────────────────────────────────────────
+  const prodMap = {};
+  ventas.forEach(v => v.items.forEach(i => {
+    if(!prodMap[i.name]) prodMap[i.name] = {qty:0, total:0};
+    prodMap[i.name].qty   += i.qty;
+    prodMap[i.name].total += i.price * i.qty;
+  }));
+  const prods = Object.entries(prodMap).sort((a,b) => b[1].qty - a[1].qty).slice(0,8);
+  const maxQty = prods.length ? prods[0][1].qty : 1;
+
+  // ── DESGLOSE POR MESERO ────────────────────────────────────────────────────
+  const meseroMap = {};
+  ventas.forEach(v => {
+    if(!meseroMap[v.mesero]) meseroMap[v.mesero] = {mesas:0, total:0};
+    meseroMap[v.mesero].mesas++;
+    meseroMap[v.mesero].total += v.total;
+  });
+  const meseros = Object.entries(meseroMap).sort((a,b) => b[1].total - a[1].total);
+  const maxMes = meseros.length ? meseros[0][1].total : 1;
+
+  document.getElementById('caja-grid').innerHTML = `
+    <div class="caja-seccion">
+      <div class="caja-seccion-header"><i class="fa-solid fa-star" style="color:var(--gold)"></i> Productos más vendidos</div>
+      <div class="caja-seccion-body">
+        ${prods.length ? prods.map(([name,d])=>`
+          <div class="caja-producto-row">
+            <span>${name}<span class="caja-producto-qty">${d.qty} uds</span></span>
+            <span style="font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;">${fmt(d.total)}</span>
+          </div>
+          <div class="caja-bar"><div class="caja-bar-fill" style="width:${Math.round(d.qty/maxQty*100)}%;background:var(--gold);"></div></div>
+        `).join('') : '<p style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px 0;">Sin datos</p>'}
+      </div>
+    </div>
+    <div class="caja-seccion">
+      <div class="caja-seccion-header"><i class="fa-solid fa-user-tie" style="color:var(--gold)"></i> Ventas por mesero</div>
+      <div class="caja-seccion-body">
+        ${meseros.length ? meseros.map(([name,d])=>`
+          <div class="caja-metodo-row">
+            <span>${name}</span>
+            <span style="font-weight:600;">${d.mesas} mesa${d.mesas!==1?'s':''} · ${fmt(d.total)}</span>
+          </div>
+          <div class="caja-bar"><div class="caja-bar-fill" style="width:${Math.round(d.total/maxMes*100)}%;"></div></div>
+        `).join('')+`
+          <div class="caja-metodo-row" style="margin-top:8px;">
+            <span>TOTAL</span><span>${fmt(totalDia)}</span>
+          </div>` : '<p style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px 0;">Sin datos</p>'}
+      </div>
+    </div>`;
+
+  // ── TABLA DE VENTAS ────────────────────────────────────────────────────────
+  const tbody = document.getElementById('caja-ventas-tbody');
+  const empty = document.getElementById('caja-empty');
+  if(!ventas.length){
+    tbody.innerHTML='';
+    empty.style.display='';
+  } else {
+    empty.style.display='none';
+    tbody.innerHTML = ventas.slice().reverse().map(v => {
+      const hora = new Date(v.fecha).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+      const resumen = v.items.map(i=>`${i.qty}x ${i.name}`).join(', ');
+      return `<tr>
+        <td style="color:var(--muted);font-variant-numeric:tabular-nums;">${hora}</td>
+        <td><strong>Mesa #${v.tableNumber}</strong></td>
+        <td>${v.area}</td>
+        <td>${v.mesero}</td>
+        <td style="color:var(--muted);font-size:.78rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${resumen}</td>
+        <td style="text-align:right;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;">${fmt(v.total)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Cabecera de impresión
+  const r = data.restaurant||{};
+  document.getElementById('caja-print-header').innerHTML = `
+    <h2 style="font-family:'Playfair Display SC',serif;margin-bottom:4px;">${r.name||'Restaurante'}</h2>
+    <div style="font-size:.85rem;color:#555;">${r.address||''} · ${r.phone||''}</div>
+    <div style="font-size:.85rem;margin-top:4px;"><strong>Cierre de Caja — ${fechaSel}</strong></div>
+    <div style="font-size:.8rem;color:#555;">Impreso: ${new Date().toLocaleString('es')}</div>
+    <hr style="margin:12px 0;">`;
+}
+
+function limpiarVentasDia(){
+  const inp = document.getElementById('caja-fecha');
+  const fechaSel = inp.value || fechaLocal(new Date().toISOString());
+  const count = (data.ventas||[]).filter(v => fechaLocal(v.fecha)===fechaSel).length;
+  if(!count){ toast('No hay ventas en esa fecha','error'); return; }
+  if(!confirm(`¿Eliminar los ${count} registros de ventas del ${fechaSel}? Esta acción no se puede deshacer.`)) return;
+  data.ventas = (data.ventas||[]).filter(v => fechaLocal(v.fecha) !== fechaSel);
+  saveData();
+  renderCajaPage();
+  toast('Registros eliminados','success');
 }
 
 // USERS CRUD
