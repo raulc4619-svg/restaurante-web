@@ -379,8 +379,11 @@ dbRef.on('value', snap => {
     // initApp se llama desde DOMContentLoaded (ver abajo)
   } else {
     // Actualización de otro dispositivo → refrescar vista sin interrumpir
-    if(currentTableId) renderOrder();
-    else renderTables();
+    // No re-renderizar si el mesero está escribiendo una nota (evita cerrar teclado)
+    const focused = document.activeElement;
+    const escribiendoNota = focused && focused.classList.contains('note-input');
+    if(currentTableId && !escribiendoNota) renderOrder();
+    else if(!currentTableId) renderTables();
   }
 });
 function nextId(arr){ return arr.length ? Math.max(...arr.map(x=>x.id))+1 : 1; }
@@ -537,7 +540,9 @@ function renderOrder(){
         <span style="font-size:.76rem;color:var(--muted);">${fmt(item.price)} c/u</span>
       </div>
       <input type="text" class="note-input" placeholder="Nota: sin sal, término…"
-        value="${item.note||''}" oninput="setNote('${item.lineId}',this.value)">
+        value="${item.note||''}"
+        oninput="setNoteLocal('${item.lineId}',this.value)"
+        onblur="saveNoteFirebase('${item.lineId}',this.value)">
     </div>`).join('');
 }
 
@@ -602,7 +607,14 @@ function changeQty(lineId, delta){
   item.qty = Math.max(1, item.qty+delta);
   saveData(); renderOrder();
 }
-function setNote(lineId, val){
+function setNoteLocal(lineId, val){
+  // Solo actualiza el objeto local — NO dispara Firebase ni re-render
+  const order = getOrder(currentTableId); if(!order) return;
+  const item  = order.items.find(i=>i.lineId==lineId);
+  if(item) item.note = val;
+}
+function saveNoteFirebase(lineId, val){
+  // Guarda en Firebase solo cuando el mesero sale del campo (onblur)
   const order = getOrder(currentTableId); if(!order) return;
   const item  = order.items.find(i=>i.lineId==lineId);
   if(item){ item.note = val; saveData(); }
