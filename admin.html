@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display+SC:wght@400;700&family=Playfair+Display:wght@700&family=Karla:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --navy:#1B3A6B; --navy-dark:#112549; --navy-mid:#234A88;
@@ -597,6 +598,7 @@
             <div><h1 class="page-h1">Cierre de Caja</h1><p class="page-p">Resumen de ventas por día</p></div>
             <div style="display:flex;gap:8px;">
               <button class="btn btn-ghost btn-sm" onclick="limpiarVentasDia()"><i class="fa-solid fa-trash"></i> Limpiar día</button>
+              <button class="btn btn-ghost btn-sm" onclick="exportarExcel()" style="color:#1D6F42;border-color:#1D6F42;"><i class="fa-solid fa-file-excel"></i> Exportar Excel</button>
               <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir reporte</button>
             </div>
           </div>
@@ -1650,6 +1652,108 @@ function limpiarVentasDia(){
   saveData();
   renderCajaPage();
   toast('Registros eliminados','success');
+}
+
+function exportarExcel(){
+  const inp = document.getElementById('caja-fecha');
+  const fechaSel = inp.value || fechaLocal(new Date().toISOString());
+  const ventas = (data.ventas||[]).filter(v => fechaLocal(v.fecha) === fechaSel);
+  if(!ventas.length){ toast('No hay ventas para exportar en esa fecha','error'); return; }
+
+  const r = data.restaurant||{};
+  const wb = XLSX.utils.book_new();
+
+  // ── HOJA 1: RESUMEN ────────────────────────────────────────────────────────
+  const totalDia   = ventas.reduce((a,v) => a+v.total, 0);
+  const totalItems = ventas.reduce((a,v) => a+v.items.reduce((b,i)=>b+i.qty,0), 0);
+  const ticketProm = ventas.length ? totalDia/ventas.length : 0;
+  const mesasAtend = new Set(ventas.map(v=>v.tableId)).size;
+
+  // Productos más vendidos
+  const prodMap = {};
+  ventas.forEach(v => v.items.forEach(i => {
+    if(!prodMap[i.name]) prodMap[i.name]={qty:0,total:0};
+    prodMap[i.name].qty   += i.qty;
+    prodMap[i.name].total += i.price*i.qty;
+  }));
+  const prods = Object.entries(prodMap).sort((a,b)=>b[1].qty-a[1].qty);
+
+  // Ventas por mesero
+  const meseroMap = {};
+  ventas.forEach(v => {
+    if(!meseroMap[v.mesero]) meseroMap[v.mesero]={mesas:0,total:0};
+    meseroMap[v.mesero].mesas++;
+    meseroMap[v.mesero].total += v.total;
+  });
+
+  const wsResumen = XLSX.utils.aoa_to_sheet([
+    [r.name||'Restaurante'],
+    ['Cierre de Caja — '+fechaSel],
+    ['Generado:', new Date().toLocaleString('es')],
+    [],
+    ['── RESUMEN DEL DÍA ──────────────────'],
+    ['Total recaudado',        totalDia],
+    ['Cobros realizados',      ventas.length],
+    ['Mesas atendidas',        mesasAtend],
+    ['Platos servidos',        totalItems],
+    ['Ticket promedio',        parseFloat(ticketProm.toFixed(2))],
+    [],
+    ['── PRODUCTOS MÁS VENDIDOS ──────────'],
+    ['Producto','Cantidad vendida','Total generado'],
+    ...prods.map(([name,d])=>[name, d.qty, parseFloat(d.total.toFixed(2))]),
+    [],
+    ['── VENTAS POR MESERO ───────────────'],
+    ['Mesero','Mesas atendidas','Total generado'],
+    ...Object.entries(meseroMap).sort((a,b)=>b[1].total-a[1].total)
+      .map(([name,d])=>[name, d.mesas, parseFloat(d.total.toFixed(2))])
+  ]);
+
+  // Estilos de ancho de columna
+  wsResumen['!cols'] = [{wch:35},{wch:20},{wch:20}];
+  // Formato moneda en celdas numéricas de totales
+  ['B6','B11','B14'].forEach(ref => {
+    if(wsResumen[ref]) wsResumen[ref].z = '"$"#,##0.00';
+  });
+  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+  // ── HOJA 2: DETALLE DE VENTAS ─────────────────────────────────────────────
+  const filas = [
+    ['Hora','Mesa #','Área','Mesero','Ítems','Detalle de ítems','Total']
+  ];
+  ventas.slice().reverse().forEach(v => {
+    const hora    = new Date(v.fecha).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+    const detalle = v.items.map(i=>`${i.qty}x ${i.name} ($${i.price})`).join(' | ');
+    const nItems  = v.items.reduce((a,i)=>a+i.qty,0);
+    filas.push([hora, v.tableNumber, v.area, v.mesero, nItems, detalle, parseFloat(v.total.toFixed(2))]);
+  });
+  filas.push([]);
+  filas.push(['','','','','','TOTAL',parseFloat(totalDia.toFixed(2))]);
+
+  const wsDetalle = XLSX.utils.aoa_to_sheet(filas);
+  wsDetalle['!cols'] = [{wch:8},{wch:8},{wch:14},{wch:18},{wch:7},{wch:50},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle de Ventas');
+
+  // ── HOJA 3: ÍTEMS VENDIDOS ────────────────────────────────────────────────
+  const filasItems = [['Mesa #','Área','Mesero','Producto','Cantidad','Precio Unitario','Subtotal','Hora']];
+  ventas.slice().reverse().forEach(v => {
+    const hora = new Date(v.fecha).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+    v.items.forEach(i => {
+      filasItems.push([
+        v.tableNumber, v.area, v.mesero,
+        i.name, i.qty,
+        parseFloat(i.price.toFixed(2)),
+        parseFloat((i.price*i.qty).toFixed(2)),
+        hora
+      ]);
+    });
+  });
+  const wsItems = XLSX.utils.aoa_to_sheet(filasItems);
+  wsItems['!cols'] = [{wch:8},{wch:14},{wch:18},{wch:25},{wch:10},{wch:16},{wch:12},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, wsItems, 'Ítems Vendidos');
+
+  // Descargar
+  XLSX.writeFile(wb, `CierreCaja_${fechaSel}.xlsx`);
+  toast('Excel exportado correctamente','success');
 }
 
 // USERS CRUD
